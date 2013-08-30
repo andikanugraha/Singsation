@@ -1,0 +1,33 @@
+
+<list>
+	<song>
+		<trackno>1</trackno>
+		<title>I'll Be There</title>
+		<singer>SPICA</singer>
+		<category>Korean Song</category>
+		<duration>03:07.00</duration>
+		<file>01 I'll Be There.mp3</file>
+		<lyrics>001_spica_i'll be there.lrc</lyrics>
+		<coveralbum>001_spica.jpg</coveralbum>
+	</song>
+	<song>
+		<trackno>2</trackno>
+		<title>Love Song</title>
+		<singer>Big Bang</singer>
+		<category>Korean Song</category>
+		<file>01 Love Song.mp3</file>
+		<duration>03:07.00</duration>
+		<lyrics>002_big bang_love song.lrc</lyrics>
+		<coveralbum>002_bigbang.jpg</coveralbum>
+	</song>
+	<song>
+		<trackno>3</trackno>
+		<title>Digital Love</title>
+		<singer>Daft Punk</singer>
+		<category>English Song</category>
+		<file>03 Digital Love.mp3</file>
+		<duration>03:07.00</duration>
+		<lyrics>003_daft punk_digital love.lrc</lyrics>
+		<coveralbum>003_daftpunk.png</coveralbum>
+	</song>
+</list>
