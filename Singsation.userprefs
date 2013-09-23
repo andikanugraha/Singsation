@@ -1,0 +1,22 @@
+﻿<Properties>
+  <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets\Scripts\SpectrumManager.cs">
+    <Files>
+      <File FileName="Assets\Scripts\SongSelection.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\SongContainer.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\LoadXmlData.cs" Line="1" Column="1" />
+      <File FileName="Assets\Xml\songlist.xml" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\GuiTest.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\LyricsManager.cs" Line="1" Column="1" />
+      <File FileName="Assets\ObjectSend.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\GamePlayManager.cs" Line="31" Column="28" />
+      <File FileName="Assets\Scripts\MainMenu.cs" Line="1" Column="1" />
+      <File FileName="Assets\Scripts\Microphone\MicrophoneInput.cs" Line="71" Column="47" />
+      <File FileName="Assets\Scripts\SpectrumManager.cs" Line="69" Column="2" />
+    </Files>
+  </MonoDevelop.Ide.Workbench>
+  <MonoDevelop.Ide.DebuggingService.Breakpoints>
+    <BreakpointStore />
+  </MonoDevelop.Ide.DebuggingService.Breakpoints>
+  <MonoDevelop.Ide.DebuggingService.PinnedWatches />
+</Properties>

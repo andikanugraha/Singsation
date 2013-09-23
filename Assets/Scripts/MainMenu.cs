@@ -23,7 +23,7 @@ public class MainMenu : MonoBehaviour {
 		
 		// Make the first button. If it is pressed, Application.Loadlevel (1) will be executed
 		if(GUI.Button(new Rect( xPos, yPos, widthButton, heightButton), "Start Sing")) {
-			Application.LoadLevel(1);
+			Application.LoadLevel("SongSelection");
 		}
 		
 		yPos += heightButton + spaceButton;
