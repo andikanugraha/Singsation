@@ -26,7 +26,7 @@ public class SpectrumManager : MonoBehaviour {
 	float threshold = 0.02f;      // minimum amplitude to extract pitch
 	float rmsValue;   // sound level - RMS
 	float dbValue;    // sound level - dB
-	float pitchValue; // sound pitch - Hz
+	public float pitchValue; // sound pitch - Hz
 
 	private float[] samples; // audio samples
 	private float[] spectrum; // audio spectrum

@@ -51,7 +51,6 @@
      <Compile Include="Assets\Managers\GUIManager.cs" />
      <Compile Include="Assets\Managers\GameEventManager.cs" />
      <Compile Include="Assets\Managers\ParticleEmitterManager.cs" />
-     <Compile Include="Assets\ObjectSend.cs" />
      <Compile Include="Assets\Platform\PlatformManager.cs" />
      <Compile Include="Assets\Runner\Runner.cs" />
      <Compile Include="Assets\Scripts\ConstantVariable.cs" />
@@ -62,12 +61,16 @@
      <Compile Include="Assets\Scripts\LyricsManager.cs" />
      <Compile Include="Assets\Scripts\MainMenu.cs" />
      <Compile Include="Assets\Scripts\Microphone\MicrophoneInput.cs" />
+     <Compile Include="Assets\Scripts\NoteFrequencyManager.cs" />
+     <Compile Include="Assets\Scripts\NoteVisualizerManager.cs" />
+     <Compile Include="Assets\Scripts\ObjectSend.cs" />
      <Compile Include="Assets\Scripts\PauseMenu.cs" />
      <Compile Include="Assets\Scripts\SongContainer.cs" />
      <Compile Include="Assets\Scripts\SongSelection.cs" />
      <Compile Include="Assets\Scripts\SpectrumManager.cs" />
      <Compile Include="Assets\Skyline\SkylineManager.cs" />
      <None Include="Assets\Standard Assets\Skyboxes\_skybox info.txt" />
+     <None Include="Assets\Xml\notefrequency.txt" />
      <None Include="Assets\Xml\songlist.xml" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

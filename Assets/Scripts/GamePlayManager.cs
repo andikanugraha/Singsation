@@ -23,7 +23,8 @@ public class GamePlayManager : MonoBehaviour
 
 		void Awake ()
 		{
-				dataSend = GameObject.Find ("data_send").GetComponent<ObjectSend> ();
+				//For debuging disable dataSend
+				//dataSend = GameObject.Find ("data_send").GetComponent<ObjectSend> ();
 		}
 		// Use this for initialization
 		void Start ()
