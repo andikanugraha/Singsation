@@ -9,6 +9,8 @@
 		<file>001_spica_i'll be there</file>
 		<lyrics>001_spica_i'll be there.lrc</lyrics>
 		<coveralbum>001_spica.jpg</coveralbum>
+		<bpm>180</bpm>
+		<notes>001_spica_i'll be there.txt</notes>
 	</song>
 	<song>
 		<trackno>2</trackno>
@@ -19,6 +21,8 @@
 		<duration>03:07.00</duration>
 		<lyrics>002_big bang_love song.lrc</lyrics>
 		<coveralbum>002_bigbang.jpg</coveralbum>
+		<bpm>180</bpm>
+		<notes>002_big bang_love song.txt</notes>
 	</song>
 	<song>
 		<trackno>3</trackno>
@@ -29,5 +33,7 @@
 		<duration>03:07.00</duration>
 		<lyrics>003_daft punk_digital love.lrc</lyrics>
 		<coveralbum>003_daftpunk.png</coveralbum>
+		<bpm>180</bpm>
+		<notes>003_daft punk_digital love.txt</notes>
 	</song>
 </list>

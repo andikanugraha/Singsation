@@ -11,6 +11,8 @@ public class SongContainer {
 	public string file;
 	public string lyrics;
 	public string coverAlbum;
+	public string notes;
+	public float bpm;
 
 //	public GUIText title;
 //	public GUIText singer;

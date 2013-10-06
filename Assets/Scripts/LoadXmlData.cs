@@ -44,6 +44,10 @@ public class LoadXmlData : MonoBehaviour
 										obj.Add ("lyrics", subcontent.InnerXml);
 								} else if (subcontent.Name == "coveralbum") {
 										obj.Add ("coveralbum", subcontent.InnerXml);
+								} else if (subcontent.Name == "notes") {
+										obj.Add ("notes", subcontent.InnerXml);
+								} else if (subcontent.Name == "bpm") {
+										obj.Add ("bpm", subcontent.InnerXml);
 								}
 						}
 						songs.Add (obj);
