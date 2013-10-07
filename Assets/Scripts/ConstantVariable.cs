@@ -20,4 +20,9 @@ public class ConstantVariable : MonoBehaviour {
 	public const string TagNotes = "Notes";
 	public const string TagNotesManager = "Notes Manager";
 	
+	//Depth
+	public const int NoteDepth = 8;
+	public const int LyricsDepth = 9;
+	public const int MicNoteDepth = 10;
+	
 }
