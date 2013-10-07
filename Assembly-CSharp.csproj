@@ -142,6 +142,7 @@
      <Compile Include="Assets\Scripts\LyricsManager.cs" />
      <Compile Include="Assets\Scripts\MainMenu.cs" />
      <Compile Include="Assets\Scripts\MicrophoneInput.cs" />
+     <Compile Include="Assets\Scripts\MicrophoneVisualizerManager.cs" />
      <Compile Include="Assets\Scripts\NoteFrequencyManager.cs" />
      <Compile Include="Assets\Scripts\NoteVisualizerManager.cs" />
      <Compile Include="Assets\Scripts\NotesManager.cs" />

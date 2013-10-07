@@ -29,7 +29,7 @@ public class LyricsManager : MonoBehaviour
 	{
 		globalSetting = GameObject.Find (ConstantVariable.GlobalSetting).GetComponent<GlobalSetting> ();
 		if(!globalSetting.debugMode) {
-			dataSend = GameObject.Find (ConstantVariable.dataSend).GetComponent<ObjectSend> ();
+			dataSend = GameObject.Find (ConstantVariable.DataSend).GetComponent<ObjectSend> ();
 		}
 		
 		lyricsContainer = new List<string> ();
@@ -40,7 +40,7 @@ public class LyricsManager : MonoBehaviour
 	void Start ()
 	{
 		if (dataSend != null) {
-			Debug.Log ("Data send ada");
+			//Debug.Log ("Data send ada");
 			lyricsFileName = dataSend.song.lyrics;
 		}
 		lyrics = new FileInfo ("Assets/Resources/Lyrics/" + lyricsFileName);
@@ -84,7 +84,7 @@ public class LyricsManager : MonoBehaviour
 				//debugText.text = lyricsText.transform.position.x.ToString();
 				lyricsElapsed.pixelInset = new Rect (0, yPos * Screen.height, percent * Screen.width, 10f);
 				lyricsElapsedNGUI.sliderValue = percent;
-				lyricsElapsedBig.sliderValue = percent;
+				//lyricsElapsedBig.sliderValue = percent;
 			} else {
 				lyricsText.text = "FINISHED";
 			}
@@ -131,7 +131,7 @@ public class LyricsManager : MonoBehaviour
 			minute *= 60;
 			float second = float.Parse (containers [1]);
 			time = minute + second;
-			Debug.Log ("Time: " + time);
+			//Debug.Log ("Time: " + time);
 		} else {
 			time = -1;	
 		}

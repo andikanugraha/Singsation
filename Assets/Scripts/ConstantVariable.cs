@@ -10,9 +10,9 @@ public class ConstantVariable : MonoBehaviour {
 	
 	//GAME OBJECT NAME
 	public const string GlobalSetting = "Global_setting";
-	public const string microphoneManager = "Microphone_manager";
-	public const string notesManager = "Notes_manager";
-	public const string dataSend = "data_send";
+	public const string MicrophoneManager = "Microphone_manager";
+	public const string NotesManager = "Notes_manager";
+	public const string DataSend = "data_send";
 	public const string XmlManager = "Xml_manager";
 	
 	//TAG

@@ -31,12 +31,12 @@ public class GamePlayManager : MonoBehaviour
 	
 	void Awake ()
 	{
-		noteFrequencyManager = GameObject.Find (ConstantVariable.microphoneManager).GetComponent<NoteFrequencyManager> ();
-		notesManager = GameObject.Find (ConstantVariable.notesManager).GetComponent<NotesManager> ();
+		noteFrequencyManager = GameObject.Find (ConstantVariable.MicrophoneManager).GetComponent<NoteFrequencyManager> ();
+		notesManager = GameObject.Find (ConstantVariable.NotesManager).GetComponent<NotesManager> ();
 		globalSetting = GameObject.Find(ConstantVariable.GlobalSetting).GetComponent<GlobalSetting> ();
 		
 		if(!globalSetting.debugMode) {
-			dataSend = GameObject.Find (ConstantVariable.dataSend).GetComponent<ObjectSend> ();
+			dataSend = GameObject.Find (ConstantVariable.DataSend).GetComponent<ObjectSend> ();
 		}
 		
 	}
