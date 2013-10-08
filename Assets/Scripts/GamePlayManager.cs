@@ -20,6 +20,7 @@ public class GamePlayManager : MonoBehaviour
 	public MicrophoneInput microphoneInput;
 	public GUIText songTitle;
 	public GUIText scoreText;
+	public UILabel scoreLabel;
 	
 	private float score;
 	private float matchKey;
@@ -125,6 +126,7 @@ public class GamePlayManager : MonoBehaviour
 		}
 		
 		scoreText.text = "Score: " + score + " \n key: " + key + " (" + modKey + ")\n matchkey: " + matchKey + " (" + modMatchKey + ")";
+		scoreLabel.text = "Score: " + score;
 		timeLapse.text = ConvertToTime (song.time) + " / " + ConvertToTime (song.clip.length);
 	}
 	

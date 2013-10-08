@@ -20,13 +20,18 @@ public class SpectrumManager : MonoBehaviour {
 //		debugText.text = spectrum[0] + " - " + spectrum[1];
 //		
 //	}
+	
+	
 	public GUIText display; // drag a GUIText here to show results
+	public UISlider decibelBar;
+	
 	int qSamples = 1024;  // array size
 	float refValue = 0.1f; // RMS value for 0 dB
 	float threshold = 0.02f;      // minimum amplitude to extract pitch
 	float rmsValue;   // sound level - RMS
 	float dbValue;    // sound level - dB
 	public float pitchValue; // sound pitch - Hz
+	public float maxDecibel = 13; //maximum decibel
 
 	private float[] samples; // audio samples
 	private float[] spectrum; // audio spectrum
@@ -65,8 +70,6 @@ public class SpectrumManager : MonoBehaviour {
 		pitchValue = freqN * 24000/qSamples; // convert index to frequency
 	}
 
-
-
 	void Update () {
 		if (Input.GetKeyDown("p")){
 			audio.Play();
@@ -77,6 +80,12 @@ public class SpectrumManager : MonoBehaviour {
 				" ("+dbValue.ToString("F1")+" dB)\n"+
 					"Pitch: "+pitchValue.ToString("F0")+" Hz";
 		}
+		
+		if(decibelBar) {
+			decibelBar.sliderValue = dbValue / maxDecibel;
+		}	
+		
+		//decibelBar.sliderValue = 0.8f;
 	}
 
 
