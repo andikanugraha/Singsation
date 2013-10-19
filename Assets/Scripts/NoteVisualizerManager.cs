@@ -7,14 +7,14 @@ public class NoteVisualizerManager : MonoBehaviour
 {
 
 	public float noteHeight = 20;
-	public float noteWidth = 10;
-	public float panelWidth = 800;
+	public float panelWidth = 480;
 	public float panelHeight = 400;
 	public float pivotX = -400;
 	public float pivotY = -400;
 	public Texture texture;
-	public GUITexture noteIndicator;
+	
 	public UISlider progressNotes;
+	public UISprite noteBackground;
 	public UISprite noteIndicatorNGUI;
 	public UISprite notePrefabs;
 	public UISprite micNotePrefabs;
@@ -37,34 +37,33 @@ public class NoteVisualizerManager : MonoBehaviour
 		notesManager = GameObject.Find(ConstantVariable.NotesManager).GetComponent<NotesManager>();
 		noteFrequencyManager = GameObject.Find (ConstantVariable.MicrophoneManager).GetComponent<NoteFrequencyManager>();
 		
+		//Initiate
 		notesCollection = new List<UISprite>();
 		micNotesCollection = new List<UISprite>();
 		lyricsCollection = new List<UILabel>();
-		newLine = true;
+		newLine = true; //untuk masuk ke lyrics berikut nya
 		currentLine = 0;
 		keyPrevious = 0;
+		
 	}
 	
 	// Use this for initialization
 	void Start ()
 	{
-
+		//Overriding value
+		if(noteBackground){
+			panelWidth = noteBackground.transform.localScale.x;
+			panelHeight = noteBackground.transform.localScale.y;
+			pivotX = noteBackground.transform.localPosition.x;
+			pivotY = noteBackground.transform.localPosition.y;
+		}
 	}
 	
 	// Update is called once per frame
 	void Update ()
 	{
-		//float x = noteIndicator.guiTexture.pixelInset.x;
-		float y = NotePosition (noteFrequencyManager.key);
-		float x = 100;			
-
-		float width = noteIndicator.pixelInset.width;
-		float height = noteIndicator.pixelInset.height;
-		noteIndicator.pixelInset = new Rect (x, y, width, height);
 		
-		
-		//NGUI 
-		
+		//hitung posisi indikator bar saat ini dalam satu line lyrics
 		float percent = 0;
 		if(notesManager.currentLine <= 0) {
 			percent = notesManager.position / notesManager.lineBreakContainer[notesManager.currentLine];	
@@ -75,6 +74,8 @@ public class NoteVisualizerManager : MonoBehaviour
 		
 		//Note visualizer
 		progressNotes.sliderValue = percent;
+		
+		//Apabila memasuki line baru maka proses untuk line berikutnya
 		if(newLine) {
 			foreach(UISprite sprite in notesCollection) {
 				Destroy(sprite.gameObject);	
@@ -93,100 +94,77 @@ public class NoteVisualizerManager : MonoBehaviour
 			lyricsCollection = new List<UILabel>();
 			
 			float linePos = 0;
+			
 			if(notesManager.currentLine > 0) {
 				linePos = notesManager.lineBreakContainer[notesManager.currentLine - 1];
 			}
-			for ( float i = linePos; i < notesManager.lineBreakContainer[notesManager.currentLine]; i++) {
-				if(notesManager.notesContainer.ContainsKey(i)){
-					float key = notesManager.notesContainer[i];
-					float distance = notesManager.timeContainer[i];
-					string lyrics = notesManager.lyricsContainer[i];
-					
-					float posX = pivotX + (i - linePos) * noteWidth;
-					float posY = NotePositionPanel(key);
-					
-					UISprite note = (UISprite) Instantiate(notePrefabs, Vector3.zero, Quaternion.identity);
-					note.pivot = UIWidget.Pivot.BottomLeft;
-					note.transform.parent = panel.transform;
-					note.transform.localRotation = Quaternion.identity;
-					note.transform.localPosition = new Vector3(posX, posY, 0);
-					note.transform.localScale = new Vector3(distance * noteWidth, noteHeight, 1);
-					note.depth = ConstantVariable.NoteDepth;
-					notesCollection.Add(note);
-					
-					//Add lyrics
-					UILabel labels = (UILabel) Instantiate(lyricsPrefabs, Vector3.zero, Quaternion.identity);
-					labels.pivot = UIWidget.Pivot.Center;
-					labels.transform.parent = note.transform;
-					labels.transform.localRotation = Quaternion.identity;
-					
-					labels.transform.localPosition = new Vector3( 0.5f , 0.5f, 0);
-					labels.transform.localScale = new Vector3(0.2f, 0.6f, 0.5f);
-					labels.text = lyrics;
-					labels.depth = ConstantVariable.LyricsDepth;
-					lyricsCollection.Add(labels);
-				} else {
-					
-				}
-				
-			}
+			
+			//create note
+			SongNoteVisualizer(linePos);
+			
 			newLine = false;
 		}
 		
+		//Cek apakah sudah masuk ke line berikutnya
 		if(currentLine != notesManager.currentLine) {
 			newLine = true;
 			currentLine = notesManager.currentLine;
 		}
 		
-		float micKey = Mathf.Round(noteFrequencyManager.key);
-		if(micKey > 0) {
-			if(keyPrevious != micKey) {
-				micNote = (UISprite) Instantiate(micNotePrefabs, Vector3.zero, Quaternion.identity);
-				micNote.pivot = UIWidget.Pivot.BottomLeft;
-				micNote.transform.parent = panel.transform;
-				micNote.transform.localRotation = Quaternion.identity;
-				
-				micNoteStart = percent;
-				float posX = pivotX + percent * panelWidth;
-				float posY = NotePositionPanel(micKey); //pivotY + (micKey % 12) * noteSize;
-				micNote.transform.localPosition = new Vector3(posX, posY, 0);
-				micNote.depth = ConstantVariable.MicNoteDepth;
-				micNotesCollection.Add(micNote);
-			} else {
-				
-			}
-			
-			keyPrevious = micKey;
-			float length = ( percent - micNoteStart ) * panelWidth;
-			micNote.transform.localScale = new Vector3(length , noteHeight, 1);
-			
-		}
+		//buat note untuk visualisasi microphone
+		MicrophoneNoteVisualizer(noteFrequencyManager.key, percent);
+		
 		
 		//Note indicator
-		y = NotePositionPanel(noteFrequencyManager.key);
+		float y = NotePositionPanel(noteFrequencyManager.key);
 		noteIndicatorNGUI.transform.localPosition = new Vector3 (pivotX + percent * panelWidth, y, 0);
 		
 	}
-
-	void OnGUI ()
-	{
-
-	}
-
-	float NotePosition (float key)
-	{
-		float pos = key % 12;
-		pos = (Screen.height / 24 * pos);		
-		return pos;
+	
+	//Create note from song for one line
+	void SongNoteVisualizer(float linePos){
+		
+		//Hitung jarak dari line sekarang ke line berikutnya
+		float lengthUntilBreak = 0;
+		lengthUntilBreak = Mathf.Abs(notesManager.lineBreakContainer[notesManager.currentLine] - linePos);
+		
+		//start making note
+		for ( float i = linePos; i < notesManager.lineBreakContainer[notesManager.currentLine]; i++) {
+			if(notesManager.notesContainer.ContainsKey(i)){
+				float noteWidth = panelWidth / lengthUntilBreak;
+				float key = notesManager.notesContainer[i];
+				float distance = notesManager.timeContainer[i];
+				string lyrics = notesManager.lyricsContainer[i];
+				
+				float posX = pivotX + (i - linePos) * noteWidth;
+				float posY = NotePositionPanel(key);
+				
+				UISprite note = (UISprite) Instantiate(notePrefabs, Vector3.zero, Quaternion.identity);
+				note.pivot = UIWidget.Pivot.BottomLeft;
+				note.transform.parent = panel.transform;
+				note.transform.localRotation = Quaternion.identity;
+				note.transform.localPosition = new Vector3(posX, posY, 0);
+				note.transform.localScale = new Vector3(distance * noteWidth, noteHeight, 1);
+				note.depth = ConstantVariable.NoteDepth;
+				notesCollection.Add(note);
+				
+				//Add lyrics
+				UILabel labels = (UILabel) Instantiate(lyricsPrefabs, Vector3.zero, Quaternion.identity);
+				labels.pivot = UIWidget.Pivot.Center;
+				labels.transform.parent = note.transform;
+				labels.transform.localRotation = Quaternion.identity;
+				
+				labels.transform.localPosition = new Vector3( 0.5f , 0.5f, 0);
+				labels.transform.localScale = new Vector3(0.2f, 0.6f, 0.5f);
+				labels.text = lyrics;
+				labels.depth = ConstantVariable.LyricsDepth;
+				lyricsCollection.Add(labels);
+			} 
+		}
 	}
 	
-	float NotePositionPanel(float key) {
-		float pos = key % 12;
-		pos =  pivotY + panelHeight / 12 * pos;		
-		return pos;	
-	}
-	
-	void MicrophoneVisualizer (float key, float percent) {
+	//Create note from microphone for one line
+	void MicrophoneNoteVisualizer (float key, float percent) {
 		float micKey = Mathf.Round(key);
 		if(micKey > 0) {
 			if(keyPrevious != micKey) {
@@ -211,5 +189,21 @@ public class NoteVisualizerManager : MonoBehaviour
 			
 		}
 	}
+	
+	
+	float NotePosition (float key)
+	{
+		float pos = key % 12;
+		pos = (Screen.height / 24 * pos);		
+		return pos;
+	}
+	
+	float NotePositionPanel(float key) {
+		float pos = key % 12;
+		pos =  pivotY + panelHeight / 12 * pos;		
+		return pos;	
+	}
+	
+	
 
 }

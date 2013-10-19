@@ -66,19 +66,19 @@ public class MicrophoneInput : MonoBehaviour {
 	
 	void Update() {
 		
-		if(Microphone.IsRecording(null)){
-			
-		}
-		
-        float[] spectrum = audio.GetSpectrumData(1024, 0, FFTWindow.BlackmanHarris);
-        int i = 1;
-        while (i < 1023) {
-            Debug.DrawLine(new Vector3(i - 1, spectrum[i] + 10, 0), new Vector3(i, spectrum[i + 1] + 10, 0), Color.red);
-            Debug.DrawLine(new Vector3(i - 1, Mathf.Log(spectrum[i - 1]) + 10, 2), new Vector3(i, Mathf.Log(spectrum[i]) + 10, 2), Color.cyan);
-            Debug.DrawLine(new Vector3(Mathf.Log(i - 1), spectrum[i - 1] - 10, 1), new Vector3(Mathf.Log(i), spectrum[i] - 10, 1), Color.green);
-            Debug.DrawLine(new Vector3(Mathf.Log(i - 1), Mathf.Log(spectrum[i - 1]), 3), new Vector3(Mathf.Log(i), Mathf.Log(spectrum[i]), 3), Color.yellow);
-            i++;
-        }
+//		if(Microphone.IsRecording(null)){
+//			
+//		}
+//		
+//        float[] spectrum = audio.GetSpectrumData(1024, 0, FFTWindow.BlackmanHarris);
+//        int i = 1;
+//        while (i < 1023) {
+//            Debug.DrawLine(new Vector3(i - 1, spectrum[i] + 10, 0), new Vector3(i, spectrum[i + 1] + 10, 0), Color.red);
+//            Debug.DrawLine(new Vector3(i - 1, Mathf.Log(spectrum[i - 1]) + 10, 2), new Vector3(i, Mathf.Log(spectrum[i]) + 10, 2), Color.cyan);
+//            Debug.DrawLine(new Vector3(Mathf.Log(i - 1), spectrum[i - 1] - 10, 1), new Vector3(Mathf.Log(i), spectrum[i] - 10, 1), Color.green);
+//            Debug.DrawLine(new Vector3(Mathf.Log(i - 1), Mathf.Log(spectrum[i - 1]), 3), new Vector3(Mathf.Log(i), Mathf.Log(spectrum[i]), 3), Color.yellow);
+//            i++;
+//        }
     }
 	
 	void OnGUI()   
@@ -90,7 +90,7 @@ public class MicrophoneInput : MonoBehaviour {
             if(!Microphone.IsRecording(null))  
             {  
                 //Case the 'Record' button gets pressed  
-                if(GUI.Button(new Rect(100, 25, 200, 50), "Record"))  
+                if(GUI.Button(new Rect(100, 25, 50, 50), "Record"))  
                 {  
 					StartCoroutine(RecordPlayAnalyse());
                     //Start recording and store the audio captured from the microphone at the AudioClip in the AudioSource  
@@ -100,7 +100,7 @@ public class MicrophoneInput : MonoBehaviour {
             else //Recording is in progress  
             {  
                 //Case the 'Stop and Play' button gets pressed  
-                if(GUI.Button(new Rect(100, 25, 200, 50), "Stop and Play!"))  
+                if(GUI.Button(new Rect(100, 25, 50, 50), "Stop"))  
                 {  
                     Microphone.End(null); //Stop the audio recording  
                     goAudioSource.Play(); //Playback the recorded audio  

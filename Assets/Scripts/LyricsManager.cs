@@ -14,8 +14,8 @@ public class LyricsManager : MonoBehaviour
 	public GUITexture lyricsElapsed;
 	public GUIText debugText;
 	public UILabel lyricsNGUI;
+	public UILabel lyricsNextNGUI;
 	public UISlider lyricsElapsedNGUI;
-	public UISlider lyricsElapsedBig;
 	private string[] lyricsArray;
 	private List<string> lyricsContainer;
 	private List<float> timeContainer;
@@ -71,6 +71,7 @@ public class LyricsManager : MonoBehaviour
 				lyricsText.text = TrimLyrics (lyricsContainer [count]);
 				if (lyricsContainer.Count - count > 1) {
 					lyricsTextNext.text = TrimLyrics (lyricsContainer [count + 1]);
+					lyricsNextNGUI.text = TrimLyrics (lyricsContainer [count + 1]);
 				} else {
 					lyricsTextNext.text = "FINISHED";
 				}
@@ -81,10 +82,8 @@ public class LyricsManager : MonoBehaviour
 				float percent = interlude / distance;
 				float xPos = lyricsText.transform.position.x;
 				float yPos = lyricsText.transform.position.y;
-				//debugText.text = lyricsText.transform.position.x.ToString();
-				lyricsElapsed.pixelInset = new Rect (0, yPos * Screen.height, percent * Screen.width, 10f);
+
 				lyricsElapsedNGUI.sliderValue = percent;
-				//lyricsElapsedBig.sliderValue = percent;
 			} else {
 				lyricsText.text = "FINISHED";
 			}
