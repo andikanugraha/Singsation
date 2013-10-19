@@ -1,0 +1,8 @@
+//float x = noteIndicator.guiTexture.pixelInset.x;
+//float y = NotePosition (noteFrequencyManager.key);
+//float x = 100;			
+//float width = noteIndicator.pixelInset.width;
+//float height = noteIndicator.pixelInset.height;
+//noteIndicator.pixelInset = new Rect (x, y, width, height);
+
+lyricsElapsed.pixelInset = new Rect (0, yPos * Screen.height, percent * Screen.width, 10f);
