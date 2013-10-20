@@ -103,6 +103,7 @@
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\Wooden\Arimo14.txt" />
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Unlit - Masked Colored.shader" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\Wooden\Arimo18.txt" />
+     <None Include="Assets\Standard Assets\Particles\Sources\Shaders\Particle Alpha Blend (Queue +100).shader" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\SciFi\SciFi Font - Header.txt" />
      <None Include="Assets\ex2D\Runtime\Resources\Shaders\AlphaBlendNoZTest.shader" />
      <None Include="Assets\Other\obsolete code singsation.txt" />
@@ -154,6 +155,8 @@
  </Reference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="Assembly-UnityScript-firstpass.unityproj">
+      <Project>{1A21603D-56C8-2AFD-8AD3-977443867A6C}</Project>      <Name>Assembly-UnityScript-firstpass</Name>    </ProjectReference>
     <ProjectReference Include="Assembly-CSharp.csproj">
       <Project>{E93C22A9-A4B2-2AD7-91C7-8B0E3ED30FCD}</Project>      <Name>Assembly-CSharp</Name>    </ProjectReference>
   </ItemGroup>

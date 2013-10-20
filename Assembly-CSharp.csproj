@@ -186,6 +186,7 @@
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\Wooden\Arimo14.txt" />
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Unlit - Masked Colored.shader" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\Wooden\Arimo18.txt" />
+     <None Include="Assets\Standard Assets\Particles\Sources\Shaders\Particle Alpha Blend (Queue +100).shader" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\SciFi\SciFi Font - Header.txt" />
      <None Include="Assets\ex2D\Runtime\Resources\Shaders\AlphaBlendNoZTest.shader" />
      <None Include="Assets\Other\obsolete code singsation.txt" />
@@ -214,6 +215,10 @@
  <Reference Include="NGUI">
  <HintPath>Assets\Plugin\NGUI\DLLs\NGUI.dll</HintPath>
  </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="Assembly-UnityScript-firstpass.unityproj">
+      <Project>{1A21603D-56C8-2AFD-8AD3-977443867A6C}</Project>      <Name>Assembly-UnityScript-firstpass</Name>    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

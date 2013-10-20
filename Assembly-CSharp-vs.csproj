@@ -186,6 +186,7 @@
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\Wooden\Arimo14.txt" />
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Unlit - Masked Colored.shader" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\Wooden\Arimo18.txt" />
+     <None Include="Assets\Standard Assets\Particles\Sources\Shaders\Particle Alpha Blend (Queue +100).shader" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\SciFi\SciFi Font - Header.txt" />
      <None Include="Assets\ex2D\Runtime\Resources\Shaders\AlphaBlendNoZTest.shader" />
      <None Include="Assets\Other\obsolete code singsation.txt" />
@@ -211,6 +212,9 @@
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Unlit - Transparent Colored (SoftClip).shader" />
      <None Include="Assets\Resources\Notes\002_big bang_love song.txt" />
      <None Include="Assets\Xml\songlist.xml" />
+ <Reference Include="Assembly-UnityScript-firstpass">
+ <HintPath>Library\ScriptAssemblies\Assembly-UnityScript-firstpass.dll</HintPath>
+ </Reference>
  <Reference Include="NGUI">
  <HintPath>Assets\Plugin\NGUI\DLLs\NGUI.dll</HintPath>
  </Reference>

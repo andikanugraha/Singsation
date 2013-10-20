@@ -5,7 +5,6 @@ using System.Collections.Generic;
 
 public class NotesManager : MonoBehaviour
 {
-	const float incrementTime = 0.15f;
 	public string notesFileName;
 	public FileInfo notes;
 	public AudioSource song;
@@ -71,7 +70,7 @@ public class NotesManager : MonoBehaviour
 			
 			//menambah posisi lagu berjalan berdasarkan waktu ketukan / beat time
 			if(deltaTime >= beatTime){
-				while(deltaTime >= incrementTime) {
+				while(deltaTime >= beatTime) {
 					deltaTime -= beatTime;
 					position++;	
 				}
