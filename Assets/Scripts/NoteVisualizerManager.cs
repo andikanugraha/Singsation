@@ -150,12 +150,13 @@ public class NoteVisualizerManager : MonoBehaviour
 				
 				//Add lyrics
 				UILabel labels = (UILabel) Instantiate(lyricsPrefabs, Vector3.zero, Quaternion.identity);
-				labels.pivot = UIWidget.Pivot.Center;
-				labels.transform.parent = note.transform;
+				labels.pivot = UIWidget.Pivot.BottomLeft;
+				labels.transform.parent = panel.transform;
+				labels.transform.localPosition = note.transform.localPosition;
 				labels.transform.localRotation = Quaternion.identity;
 				
-				labels.transform.localPosition = new Vector3( 0.5f , 0.5f, 0);
-				labels.transform.localScale = new Vector3(0.2f, 0.6f, 0.5f);
+				//labels.transform.localPosition = new Vector3( 0.5f , 0.5f, 0);
+				labels.transform.localScale = new Vector3(18f, 18f, 0.5f);
 				labels.text = lyrics;
 				labels.depth = ConstantVariable.LyricsDepth;
 				lyricsCollection.Add(labels);

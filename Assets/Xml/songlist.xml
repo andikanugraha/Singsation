@@ -36,4 +36,16 @@
 		<bpm>180</bpm>
 		<notes>003_daft punk_digital love.txt</notes>
 	</song>
+	<song>
+		<trackno>4</trackno>
+		<title>Bad Romance</title>
+		<singer>Lady Gaga</singer>
+		<category>English Song</category>
+		<file>004_lady gaga_bad romance</file>
+		<duration>03:07.00</duration>
+		<lyrics>004_lady gaga_bad romance.lrc</lyrics>
+		<coveralbum>004_ladygaga.jpg</coveralbum>
+		<bpm>180</bpm>
+		<notes>004_lady gaga_bad romance.txt</notes>
+	</song>
 </list>

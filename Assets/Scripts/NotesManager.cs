@@ -5,7 +5,6 @@ using System.Collections.Generic;
 
 public class NotesManager : MonoBehaviour
 {
-	
 	const float incrementTime = 0.15f;
 	public string notesFileName;
 	public FileInfo notes;
@@ -15,9 +14,18 @@ public class NotesManager : MonoBehaviour
 	public Dictionary<float, float> notesContainer;	// hold the notes
 	public Dictionary<float, float> timeContainer; 	// hold the time / duration
 	public Dictionary<float, string> lyricsContainer; 	// hold the lyrics
-	public List<float> lineBreakContainer;
-	public float position;
-	public int currentLine;
+	public List<float> lineBreakContainer; //menyimpan posisi baris lirik
+	public float position; //posisi lagu disetel
+	public int currentLine; //posisi baris lirik saat ini
+	public float bpm; //beat per minute
+	public float beatTime; //lama ketukan dalam detik
+	
+	/*
+	 * Menggunakan Composer hasil file notes.txt akan menghasilkan BPM standar: 180 BPM
+	 * Ultrastar menggunakan beat 4 kali BPM
+	 * Jadi lama satu ketukan sama dengan 60 detik / 180 BPM / 4 
+	 *
+	 */
 	
 	private string[] notesArray;
 	private List<string> lineContainer; 				//hold text per line
@@ -41,6 +49,8 @@ public class NotesManager : MonoBehaviour
 		deltaTime = 0;
 		position = 0;
 		currentLine = 0;
+		bpm = 180;
+		beatTime = 0;
 	}
 
 	void Start ()
@@ -49,18 +59,21 @@ public class NotesManager : MonoBehaviour
 			//Debug.Log ("Data send exist");
 			notesFileName = dataSend.song.notes;
 		}
-		ReadFile ();
-
+		ReadFile (notesFileName);
+		beatTime = 60 / bpm / 4;
+		//Debug.Log("Beat time: " + beatTime);
 	}
+	
 	// Update is called once per frame
 	void Update ()
 	{
 		if (song.isPlaying) {
 			
-			if (deltaTime >= incrementTime) {
-				while (deltaTime >= incrementTime) {
-					deltaTime -= incrementTime;
-					position++;
+			//menambah posisi lagu berjalan berdasarkan waktu ketukan / beat time
+			if(deltaTime >= beatTime){
+				while(deltaTime >= incrementTime) {
+					deltaTime -= beatTime;
+					position++;	
 				}
 			}
 			deltaTime += Time.deltaTime;
@@ -85,16 +98,23 @@ public class NotesManager : MonoBehaviour
 		}
 	}
 	
-	private void ReadFile ()
+	private void ReadFile (string notesFileName)
 	{
 		string targetFile = "Assets/Resources/Notes/" + notesFileName;
 		notes = new FileInfo (targetFile);
 		StreamReader reader = notes.OpenText ();
 		position = 0;
-		string text; 
-		do {
+		string text = ""; 
+		while(text != null) {
 			text = reader.ReadLine ();
 			lineContainer.Add (text);
+			
+			if(text != null && text.StartsWith("#BPM")){
+				bpm = float.Parse(text.Substring(text.IndexOf(':') + 1));
+				//Debug.Log(text + "\nBPM: " + bpm);
+			}
+			
+			
 			if (ValidateNotesLine (text)) {
 				string [] split = text.Split (new char []{' '});
 				//Debug.Log("split 0: " + split[1]);
@@ -119,7 +139,7 @@ public class NotesManager : MonoBehaviour
 				}
 			}
 			//Debug.Log(text);
-		} while (text != null);          
+		}          
 	}
 
 	private bool ValidateNotesLine (string text)

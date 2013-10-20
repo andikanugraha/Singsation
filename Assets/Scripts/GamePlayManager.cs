@@ -19,6 +19,7 @@ public class GamePlayManager : MonoBehaviour
 	public PauseMenu pauseMenu;
 	public MicrophoneInput microphoneInput;
 	public GUIText songTitle;
+	public UILabel songTitleNGUI;
 	public GUIText scoreText;
 	public UILabel scoreLabel;
 	public UISlider songProgressBar;
@@ -48,7 +49,11 @@ public class GamePlayManager : MonoBehaviour
 		if (dataSend != null) {
 			song.clip = dataSend.clip;
 			songTitle.text = dataSend.song.singer + " - " + dataSend.song.title;
+			songTitleNGUI.text = dataSend.song.singer + " - " + dataSend.song.title;
 			Destroy (dataSend);
+		} else {
+			songTitle.text = "Artist - Unknown";
+			songTitleNGUI.text = "Artist - Unknown";	
 		}
 		state = State.Play;
 		score = 0;
