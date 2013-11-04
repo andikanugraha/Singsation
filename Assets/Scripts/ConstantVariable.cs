@@ -15,12 +15,14 @@ public class ConstantVariable : MonoBehaviour {
 	public const string DataSend = "data_send";
 	public const string XmlManager = "Xml_manager";
 	public const string BackgroundManager = "Background Manager";
+	public const string SongSelection = "Song Selection";
 	
 	//TAG
 	public const string TagPanel = "Panel";
 	public const string TagNotes = "Notes";
 	public const string TagNotesManager = "Notes Manager";
 	public const string TagBackground = "Background";
+	public const string TagSongSelection = "Song Selection";
 	
 	//Depth
 	public const int NoteDepth = 8;
