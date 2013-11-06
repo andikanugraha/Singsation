@@ -13,22 +13,6 @@ using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
 
-// ------------------------------------------------------------------ 
-/// The anchor position of the exSpriteBase
-// ------------------------------------------------------------------ 
-
-public enum Anchor {
-    TopLeft = 0, ///< the top-left of the sprite  
-    TopCenter,   ///< the top-center of the sprite
-    TopRight,    ///< the top-right of the sprite
-    MidLeft,     ///< the middle-left of the sprite
-    MidCenter,   ///< the middle-center of the sprite
-    MidRight,    ///< the middle-right of the sprite
-    BotLeft,     ///< the bottom-left of the sprite
-    BotCenter,   ///< the bottom-center of the sprite
-    BotRight,    ///< the bottom-right of the sprite
-}
-
 ///////////////////////////////////////////////////////////////////////////////
 ///
 /// The sprite base component
@@ -36,7 +20,7 @@ public enum Anchor {
 ///////////////////////////////////////////////////////////////////////////////
 
 [ExecuteInEditMode]
-public abstract class exSpriteBase : MonoBehaviour {
+public abstract class exSpriteBase : exPlane, exISpriteBase {
 
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -57,65 +41,6 @@ public abstract class exSpriteBase : MonoBehaviour {
     }
 
     // ------------------------------------------------------------------ 
-    [SerializeField] protected float width_ = 1.0f;
-    /// the width of the sprite
-    /// 
-    /// \note if you want to custom the width of it, you need to set exSpriteBase.customSize to true
-    // ------------------------------------------------------------------ 
-
-    public virtual float width {
-        get { return width_; }
-        set {
-            if (customSize_) {
-                if (width_ != value) {
-                    width_ = value;
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-            else {
-                Debug.LogWarning("Can not set sprite's width when sprite is not using customSize!");
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected float height_ = 1.0f;
-    /// the height of the sprite
-    /// 
-    /// \note if you want to custom the height of it, you need to set exSpriteBase.customSize to true
-    // ------------------------------------------------------------------ 
-
-    public virtual float height {
-        get { return height_; }
-        set {
-            if (customSize_) {
-                if (height_ != value) {
-                    height_ = value;
-                    updateFlags |= exUpdateFlags.Vertex;
-                }
-            }
-            else {
-                Debug.LogWarning("Can not set sprite's height when sprite is not using customSize!");
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Anchor anchor_ = Anchor.MidCenter;
-    /// the anchor position used in this sprite
-    // ------------------------------------------------------------------ 
-
-    public Anchor anchor {
-        get { return anchor_; }
-        set {
-            if ( anchor_ != value ) {
-                anchor_ = value;
-                updateFlags |= exUpdateFlags.Vertex;
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
     [SerializeField] protected Color color_ = new Color(1f, 1f, 1f, 1f);
     /// the color of the sprite
     // ------------------------------------------------------------------ 
@@ -126,21 +51,6 @@ public abstract class exSpriteBase : MonoBehaviour {
             if ( color_ != value ) {
                 color_ = value;
                 updateFlags |= exUpdateFlags.Color;
-            }
-        }
-    }
-
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected Vector2 offset_ = Vector2.zero;
-    /// the offset based on the anchor, the final position of the sprite equals to offset + anchor
-    // ------------------------------------------------------------------ 
-
-    public Vector2 offset {
-        get { return offset_; }
-        set { 
-            if ( offset_ != value ) {
-                offset_ = value;
-                updateFlags |= exUpdateFlags.Vertex;
             }
         }
     }
@@ -181,25 +91,100 @@ public abstract class exSpriteBase : MonoBehaviour {
     ///////////////////////////////////////////////////////////////////////////////
     
     /// If OnEnable, isOnEnabled_ is true. If OnDisable, isOnEnabled_ is false.
-    [System.NonSerialized] protected bool isOnEnabled_;
-
+    [System.NonSerialized] protected bool isOnEnabled;
+    
     [System.NonSerialized] public exUpdateFlags updateFlags = exUpdateFlags.All;    // this value will reset after every UpdateBuffers()
+    
+    [System.NonSerialized] protected exClipping clip_;
+    public exClipping clip {
+        get {
+            return clip_;
+        }
+        set {
+            if (clip_ != value) {
+                clip_ = value;
+                UpdateMaterial();
+            }
+        }
+    }
     
     [System.NonSerialized] internal Matrix4x4 cachedWorldMatrix;    // 内部使用，只有exLayeredSprite的值才可读
 
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized properties
     ///////////////////////////////////////////////////////////////////////////////
+
+    // ------------------------------------------------------------------ 
+    /// \note if you want to custom the width of it, you need to set exSpriteBase.customSize to true
+    // ------------------------------------------------------------------ 
+
+    public override float width {
+        get { return width_; }
+        set {
+            if (customSize_) {
+                if (width_ != value) {
+                    width_ = value;
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+            else {
+                Debug.LogWarning("Can not set sprite's width when sprite is not using customSize!");
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// \note if you want to custom the height of it, you need to set exSpriteBase.customSize to true
+    // ------------------------------------------------------------------ 
+
+    public override float height {
+        get { return height_; }
+        set {
+            if (customSize_) {
+                if (height_ != value) {
+                    height_ = value;
+                    updateFlags |= exUpdateFlags.Vertex;
+                }
+            }
+            else {
+                Debug.LogWarning("Can not set sprite's height when sprite is not using customSize!");
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    /// the anchor position used in this sprite
+    // ------------------------------------------------------------------ 
+
+    public override Anchor anchor {
+        get { return anchor_; }
+        set {
+            if ( anchor_ != value ) {
+                anchor_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+    public override Vector2 offset {
+        get { return offset_; }
+        set { 
+            if ( offset_ != value ) {
+                offset_ = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
     
     [System.NonSerialized] protected int vertexCount_ = -1;
-    public virtual int vertexCount {
+    public int vertexCount {
         get {
             return vertexCount_;
         }
     }
     
     [System.NonSerialized] protected int indexCount_ = -1;
-    public virtual int indexCount {
+    public int indexCount {
         get {
             return indexCount_;
         }
@@ -211,7 +196,16 @@ public abstract class exSpriteBase : MonoBehaviour {
             if (material_ != null) {
                 return material_;
             }
-            material_ = ex2DRenderer.GetMaterial(shader_, texture);
+            if (clip_ != null) {
+                material_ = clip_.GetClippedMaterial(shader_, texture);
+                // if we don't have the clipping shader
+                if ( material_ == null ) {
+                    material_ = ex2DRenderer.GetMaterial(shader_, texture);
+                }
+            }
+            else {
+                material_ = ex2DRenderer.GetMaterial(shader_, texture);
+            }
             return material_;
         }
     }
@@ -221,7 +215,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     /// 当前sprite是否可见？只返回sprite自身属性，不一定真的显示在任一camera中。
     public virtual bool visible {
         get {
-            return isOnEnabled_;
+            return isOnEnabled;
         }
     }
 
@@ -229,64 +223,82 @@ public abstract class exSpriteBase : MonoBehaviour {
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
-    void OnEnable () {
-        isOnEnabled_ = true;
+    protected void OnEnable () {
+        isOnEnabled = true;
         if (visible) {
             Show();
         }
     }
 
-    void OnDisable () {
-        isOnEnabled_ = false;
+    protected void OnDisable () {
+        isOnEnabled = false;
         Hide();
     }
 
-    void OnDestroy () {
-        exDebug.Assert(visible == false);
+    protected void OnDestroy () {
+        if (clip_ != null) {
+            clip_.Remove(this);
+        }
+    }
+    
+#if UNITY_EDITOR
+
+    // Allows drag & dropping of this sprite to change its clip in the editor
+    protected void LateUpdate () {
+        // 这里的处理方式和exLayeredSprite.LateUpdate一样
+        // 如果exClipping不单单clip子物体，那就会复杂很多
+        if (UnityEditor.EditorApplication.isPlaying == false) {
+            // Run through the parents and see if this sprite attached to a clip
+            Transform parentTransform = transform.parent;
+            while (parentTransform != null) {
+                exClipping parentClip = parentTransform.GetComponent<exClipping>();
+                if (parentClip != null) {
+                    SetClip(parentClip);
+                    return;
+                }
+                else {
+                    exSpriteBase parentSprite = parentTransform.GetComponent<exSpriteBase>();
+                    if (parentSprite != null) {
+                        SetClip(parentSprite.clip_);
+                        return;
+                    }
+                    else {
+                        parentTransform = parentTransform.parent;
+                    }
+                }
+            }
+            // No clip
+            SetClip(null);
+        }
     }
 
+#endif
+    
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
-
-#region Functions used to update geometry buffer.
-
+    
     // ------------------------------------------------------------------ 
-    /// Add sprite's geometry data to buffers
+    // Desc:
     // ------------------------------------------------------------------ 
 
-    internal virtual void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
-        _vertices.AddRange(vertexCount);
-        if (_colors32 != null) {
-            _colors32.AddRange(vertexCount);
+    public virtual void SetClip (exClipping _clip = null) {
+        if (ReferenceEquals(clip_, _clip)) {
+            return;
         }
-        _uvs.AddRange(vertexCount);
-        updateFlags |= exUpdateFlags.AllExcludeIndex;
+        if (_clip != null) {
+            _clip.Add(this);
+        }
+        else if (clip_ != null) {
+            clip_.Remove(this);
+        }
     }
 
-    // ------------------------------------------------------------------ 
-    // Desc: 
-    // ------------------------------------------------------------------ 
-
-    protected abstract Vector3[] GetVertices (Space _space);
-
-    // ------------------------------------------------------------------ 
-    /// Get vertices of the sprite
-    /// NOTE: This function returns an empty array If sprite is invisible
-    // ------------------------------------------------------------------ 
-
-    public virtual Vector3[] GetLocalVertices () {
-        return GetVertices(Space.Self);
-    }
-
-    // ------------------------------------------------------------------ 
-    /// Get vertices of the sprite
-    /// NOTE: This function returns an empty array If sprite is invisible
-    // ------------------------------------------------------------------ 
-
-    public virtual Vector3[] GetWorldVertices () {
-        return GetVertices(Space.World);
-    }
+    ///////////////////////////////////////////////////////////////////////////////
+    // Interfaces
+    ///////////////////////////////////////////////////////////////////////////////
+    
+#region Functions used to update geometry buffer.
 
     // ------------------------------------------------------------------ 
     /// \return the update flags of changed buffer
@@ -298,11 +310,7 @@ public abstract class exSpriteBase : MonoBehaviour {
     internal abstract exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices = null);
 
 #endregion
-
-    ///////////////////////////////////////////////////////////////////////////////
-    // Interfaces
-    ///////////////////////////////////////////////////////////////////////////////
-
+    
     // ------------------------------------------------------------------ 
     // Get lossy scale
     // ------------------------------------------------------------------ 
@@ -315,6 +323,14 @@ public abstract class exSpriteBase : MonoBehaviour {
 
     internal abstract float GetScaleY (Space _space);
 
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void exISpriteBase.UpdateMaterial () {
+        UpdateMaterial ();
+    }
+    
     // ------------------------------------------------------------------ 
     // Desc: 
     // ------------------------------------------------------------------ 

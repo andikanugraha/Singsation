@@ -26,9 +26,10 @@ public enum exUpdateFlags {
 	Color	    = 8,  ///< update the vertex color
     Normal      = 16, ///< update the normal, not implemented yet
     Text	    = 32, ///< update the text, only used in sprite font
+    Transparent = 64, ///< hide sprite
 
 	VertexAndIndex = (Index | Vertex),
-	AllExcludeIndex = (Vertex | UV | Color | Normal | Text),
+	AllExcludeIndex = (Vertex | UV | Color | Normal | Text | Transparent),
 	All = (AllExcludeIndex | Index),
 };
 
@@ -130,8 +131,6 @@ public class exMesh : MonoBehaviour
     }
 
     void OnDestroy () {
-        Clear();
-        
         spriteList = null;
         sortedSpriteList = null;
         vertices = null;
@@ -163,9 +162,13 @@ public class exMesh : MonoBehaviour
     // ------------------------------------------------------------------ 
 
     public static exMesh Create (exLayer _layer) {
+#if UNITY_EDITOR
+        GameObject go = UnityEditor.EditorUtility.CreateGameObjectWithHideFlags("", exReleaseFlags.hideAndDontSave | exReleaseFlags.notEditable);
+#else
         GameObject go = new GameObject();
         // 当在EX_DEBUG模式下，如果显示着GO的Inspector，再启动游戏，由于GO是DontSave的，会先被销毁。这时Unity将会报错，但不影响运行，这个问题在类似插件中也会存在。
         go.hideFlags = exReleaseFlags.hideAndDontSave | exReleaseFlags.notEditable;
+#endif
         exMesh res = go.AddComponent<exMesh>();
         res.UpdateDebugName(_layer);
         res.Init();
@@ -192,16 +195,10 @@ public class exMesh : MonoBehaviour
             _mesh.colors32 = _colors32.FastToArray();
         }
         if ((_updateFlags & exUpdateFlags.Index) != 0) {
-            _mesh.triangles = _indices.FastToArray();      // During runtime, assigning triangles will automatically Recalculate the bounding volume.
-#if UNITY_EDITOR
-            if (UnityEditor.EditorApplication.isPlaying == false) {
-                _mesh.RecalculateBounds();
-            }
-#endif
+            _mesh.triangles = _indices.FastToArray();
         }
-        else if((_updateFlags & exUpdateFlags.Vertex) != 0) { 
-            // 如果没有更新triangles并且更新了vertex位置，则需要手动更新bbox
-            _mesh.RecalculateBounds();
+        if ((_updateFlags & exUpdateFlags.Index) != 0 || (_updateFlags & exUpdateFlags.Vertex) != 0) {
+            _mesh.RecalculateBounds();  // Sometimes Unity will not automatically recalculate the bounding volume.
         }
         if ((_updateFlags & exUpdateFlags.Normal) != 0) {
             Vector3[] normals = new Vector3[_vertices.Count];
@@ -210,7 +207,6 @@ public class exMesh : MonoBehaviour
             }
             _mesh.normals = normals;
         }
-        _updateFlags = exUpdateFlags.None;
     }
     
     // ------------------------------------------------------------------ 
@@ -235,6 +231,7 @@ public class exMesh : MonoBehaviour
                 gameObject.SetActive(visible);
             }
         }
+        updateFlags = exUpdateFlags.None;
     }
 
     // ------------------------------------------------------------------ 
@@ -287,6 +284,13 @@ public class exMesh : MonoBehaviour
             }
             mesh1 = null;
         }
+    }
+
+    [ContextMenu("Recalculate Bounds")]
+    [System.Diagnostics.Conditional("EX_DEBUG")]
+    public void RecalculateBounds () {
+        Mesh mesh = GetMeshBuffer();
+        mesh.RecalculateBounds();
     }
 
     // ------------------------------------------------------------------ 
@@ -352,13 +356,13 @@ public class exMesh : MonoBehaviour
             uvInfo += ",";
         }
         Debug.Log(uvInfo, this);
-
+        /*
         uvInfo = "Mesh.normals: ";
         foreach (var n in mesh.normals) {
             uvInfo += n;
             uvInfo += ",";
         }
-        Debug.Log(uvInfo, this);
+        Debug.Log(uvInfo, this);*/
     }
     
     ///////////////////////////////////////////////////////////////////////////////
@@ -464,9 +468,9 @@ public class exMesh : MonoBehaviour
     // Desc:
     // ------------------------------------------------------------------ 
 
-    [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("EX_DEBUG")]
+    [System.Diagnostics.Conditional("EX_DEBUG")]
     public void UpdateDebugName (exLayer layer = null) {
-#if UNITY_EDITOR || EX_DEBUG
+#if EX_DEBUG
         if (ReferenceEquals(layer, null) == false) {
             layerForDebug = layer;
         }
@@ -483,14 +487,7 @@ public class exMesh : MonoBehaviour
         else {
             matName = "None";
         }
-        int meshIndex = -1;
-        for (int i = 0; i < layerForDebug.meshList.Count; ++i) {
-            if (ReferenceEquals(this, layerForDebug.meshList[i])) {
-                meshIndex = i;
-                break;
-            }
-        }
-        gameObject.name = string.Format("_exMesh@{0}[{1:D2}]({2})", layerForDebug.name, meshIndex, matName);
+        gameObject.name = string.Format("_exMesh@{0}({1})", layerForDebug.name, matName);
 #endif
     }
 }

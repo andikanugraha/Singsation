@@ -7,6 +7,8 @@ public class BackgroundManager : MonoBehaviour {
 	
 	public float pivotX = -240;
 	public float pivotY = 80;
+	public tk2dSprite background;
+	
 	public exLayer backgroundLayer;
 	public exSprite backgroundPrefabs;
 	public int backgroundCount;

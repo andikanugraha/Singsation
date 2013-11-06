@@ -19,7 +19,7 @@ using System.Collections.Generic;
 ///
 ///////////////////////////////////////////////////////////////////////////////
 
-public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayeredSprite> {
+public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayeredSprite>, exLayer.IFriendOfLayer {
 
     public static bool enableFastShowHide = true;
 
@@ -36,14 +36,12 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         get { return depth_; }
         set {
             if ( depth_ != value ) {
-                depth_ = value;
-                // 先直接重加到layer里，以后再做优化
-                if (layer_ != null) {
-                    exLayer originalLayer = layer_;
-                    originalLayer.Remove(this, false);
-                    originalLayer.Add(this, false);
+                if (layer_ != null && isInIndexBuffer) {
+                    layer_.SetSpriteDepth(this, value);
                 }
-                //updateFlags |= exUpdateFlags.Index;
+                else {
+                    depth_ = value;
+                }
             }
         }
     }
@@ -64,13 +62,13 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     [System.NonSerialized] internal int indexBufferIndex = -1;
     
     /// fast show hide
-    [System.NonSerialized] protected bool transparent_ = false;
+    [System.NonSerialized] protected bool transparent_ = true;
     public bool transparent {
         get { return transparent_; }
         set {
             if ( transparent_ != value ) {
                 transparent_ = value;
-                updateFlags |= exUpdateFlags.Color;
+                updateFlags |= exUpdateFlags.Transparent;
             }
         }
     }
@@ -88,7 +86,9 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         internal set {
             if (value != null) {
                 exDebug.Assert(layer_ == null, "Sprite should remove from last layer before add to new one");
-                OnPreAddToLayer();
+                if (layer_ == null) {
+                    OnPreAddToLayer();
+                }
             }
             layer_ = value;
         }
@@ -146,7 +146,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
     }
 
-    void OnDestroy () {
+    protected new void OnDestroy () {
+        base.OnDestroy ();
         if (layer_ != null) {
             layer_.Remove(this, false);
         }
@@ -157,7 +158,8 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
 #if UNITY_EDITOR
     
     // Allows drag & dropping of this sprite onto layer in the editor
-    void LateUpdate () {
+    protected new void LateUpdate () {
+        base.LateUpdate ();
         if (UnityEditor.EditorApplication.isPlaying == false) {
             // Run through the parents and see if this sprite attached to a layer
             Transform parentTransform = cachedTransform.parent;
@@ -192,12 +194,10 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     protected override void UpdateMaterial () {
         if (layer_ != null) {
-            exLayer myLayer = layer_;
-            myLayer.Remove(this, false);
+            layer_.OnPreSpriteChange(this);
             material_ = null;   // set dirty, make material update.
-            if (ReferenceEquals(material, null) == false) {
-                myLayer.Add(this, false);
-            }
+            exDebug.Assert(material != null);
+            layer_.OnAfterSpriteChange(this);
         }
         else {
             material_ = null;   // set dirty, make material update.
@@ -254,7 +254,46 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         }
         return dest;
     }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
 
+    public override void SetClip (exClipping _clip = null) {
+        if (_clip != null && layer_ != null) {
+            if (_clip.transform.IsChildOf (layer_.transform) == false) {
+                Debug.LogError ("Can not add to clip which not in current layer!");
+                return;
+            }
+        }
+        base.SetClip (_clip);
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices = null) {
+        if ((updateFlags & exUpdateFlags.Transparent) != 0) {
+            updateFlags &= ~exUpdateFlags.Transparent;
+            if (transparent_) {
+                Vector3 samePoint = _vertices.buffer[0];
+                for (int i = 1; i < vertexCount_; ++i) {
+                    _vertices.buffer[vertexBufferIndex + i] = samePoint;
+                }
+                updateFlags &= ~exUpdateFlags.Vertex;
+            }
+            else {
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+            return (exUpdateFlags.Transparent | exUpdateFlags.Vertex);
+        }
+        else if (transparent_ && (updateFlags & exUpdateFlags.Vertex) != 0) {
+            updateFlags &= ~exUpdateFlags.Vertex;
+        }
+        return exUpdateFlags.None;
+    }
+    
     #region System.IComparable<exLayeredSprite>
     
     // ------------------------------------------------------------------ 
@@ -317,6 +356,10 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     
     #endregion
 
+    void exLayer.IFriendOfLayer.DoSetDepth (float _depth) {
+        depth_ = _depth;
+    }
+
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
@@ -338,15 +381,12 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
         if (ReferenceEquals(layer_, _layer)) {
             return;
         }
-        //bool isInited = (cachedTransform != null);
-        //if (isInited) {
         if (_layer != null) {
             _layer.Add(this);
         }
         else if (layer_ != null) {
             layer_.Remove(this);
         }
-        //}
     }
     
     // ------------------------------------------------------------------ 
@@ -359,9 +399,14 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
     /// Add sprite's geometry data to buffers
     // ------------------------------------------------------------------ 
 
-    internal override void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
+    internal virtual void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
         vertexBufferIndex = _vertices.Count;
-        base.FillBuffers (_vertices, _uvs, _colors32);
+        _vertices.AddRange(vertexCount_);
+        if (_colors32 != null) {
+            _colors32.AddRange(vertexCount_);
+        }
+        _uvs.AddRange(vertexCount_);
+        updateFlags |= exUpdateFlags.AllExcludeIndex;
     }
     
 #if UNITY_EDITOR
@@ -377,12 +422,12 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             _indices.Clear();
         }
         if (visible) {
+            UpdateTransform();
             exUpdateFlags originalFlags = updateFlags;
             int originalVertexBufferIndex = vertexBufferIndex;
             int originalIndexBufferIndex = indexBufferIndex;
 
             FillBuffers(_vertices, _uvs, _colors);
-            UpdateTransform();
 
             if (_indices != null) {
                 _indices.AddRange(indexCount);
@@ -410,14 +455,4 @@ public abstract class exLayeredSprite : exSpriteBase, System.IComparable<exLayer
             updateFlags |= exUpdateFlags.Vertex;
         }
     }
-    
-    // ------------------------------------------------------------------ 
-    /// Calculate the world AA bounding rect of the sprite
-    // ------------------------------------------------------------------ 
-
-    public Rect GetAABoundingRect () {
-        Vector3[] vertices = GetWorldVertices();
-        return exGeometryUtility.GetAABoundingRect(vertices);
-    }
-    
 }

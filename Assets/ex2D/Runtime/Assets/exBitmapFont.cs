@@ -20,7 +20,7 @@ using System.Collections.Generic;
 ///////////////////////////////////////////////////////////////////////////////
 
 public class exBitmapFont : ScriptableObject {
-
+    
     ///////////////////////////////////////////////////////////////////////////////
     ///
     /// A structure to descrip the character in the bitmap font 
@@ -30,7 +30,7 @@ public class exBitmapFont : ScriptableObject {
     [System.Serializable]
     public class CharInfo {
         public int id = -1;                ///< the char value
-        public int trim_x = -1;            ///< the trim offset x of the raw texture (used in atlas-font drawing in editor)
+        public int trim_x = -1; // TODO: UNITY_EDITOR ///< the trim offset x of the raw texture (used in atlas-font drawing in editor)
         public int trim_y = -1;            ///< the trim offset y of the raw texture (used in atlas-font drawing in editor)
         public int x = -1;                 ///< the x pos
         public int y = -1;                 ///< the y pos
@@ -134,6 +134,7 @@ public class exBitmapFont : ScriptableObject {
     public List<CharInfo> charInfos = new List<CharInfo>(); ///< the list of the character information
     public List<KerningInfo> kernings = new List<KerningInfo>(); ///< the list of the kerning information 
 
+    public int baseLine;   ///< the base-line of the text when draw
     public int lineHeight; ///< the space of the line
     public int size;       ///< the size in pixel of the font 
 
@@ -141,7 +142,7 @@ public class exBitmapFont : ScriptableObject {
     // internal fileds
     ///////////////////////////////////////////////////////////////////////////////
 
-    protected Dictionary<int,CharInfo> charInfoTable = null;
+    protected Dictionary<int, CharInfo> charInfoTable = null;
     protected Dictionary<KerningTableKey,int> kerningTable = null;
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -155,6 +156,7 @@ public class exBitmapFont : ScriptableObject {
         charInfos.Clear();
         kernings.Clear();
 
+        baseLine = 0;
         lineHeight = 0;
         size = 0;
 
@@ -168,7 +170,7 @@ public class exBitmapFont : ScriptableObject {
 
     public void RebuildCharInfoTable () {
         if ( charInfoTable == null ) {
-            charInfoTable = new Dictionary<int,CharInfo>(charInfos.Count);
+            charInfoTable = new Dictionary<int, CharInfo>(charInfos.Count);
         }
         charInfoTable.Clear();
         for ( int i = 0; i < charInfos.Count; ++i ) {

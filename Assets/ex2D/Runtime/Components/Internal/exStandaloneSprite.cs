@@ -93,9 +93,10 @@ public abstract class exStandaloneSprite : exSpriteBase {
         mesh = new Mesh();
         mesh.name = "ex2D Mesh";
         mesh.hideFlags = HideFlags.DontSave;
+        mesh.MarkDynamic();
     }
     
-    protected void OnDestroy () {
+    protected new void OnDestroy () {
         vertices = null;
         indices = null;
         uvs = null;
@@ -117,13 +118,15 @@ public abstract class exStandaloneSprite : exSpriteBase {
     /// you need to override this and call base.OnEnable() in your OnEnable block.
     // ------------------------------------------------------------------ 
 
-    protected void OnEnable () {
-        isOnEnabled_ = true;
+    protected new void OnEnable () {
+        isOnEnabled = true;
         Show ();
         bool reloadNonSerialized = (vertices.Count == 0);
         if (reloadNonSerialized) {
             cachedRenderer.sharedMaterial = material;
-            FillBuffers(vertices, uvs, colors32);
+            exDebug.Assert(indices.Count == 0 && uvs.Count == 0 && colors32.Count == 0);
+            UpdateVertexAndIndexCount ();
+            FillBuffers();
         }
     }
 
@@ -135,8 +138,8 @@ public abstract class exStandaloneSprite : exSpriteBase {
     /// you need to override this and call base.OnDisable() in your OnDisable block.
     // ------------------------------------------------------------------ 
 
-    protected void OnDisable () {
-        isOnEnabled_ = false;
+    protected new void OnDisable () {
+        isOnEnabled = false;
         Hide ();
     }
 
@@ -144,8 +147,8 @@ public abstract class exStandaloneSprite : exSpriteBase {
     /// Update mesh
     // ------------------------------------------------------------------ 
     
-    void LateUpdate () {
-        if (visible) {
+    protected new void LateUpdate () {
+        if (updateFlags != exUpdateFlags.None && visible) {
             exUpdateFlags meshUpdateFlags = UpdateBuffers (vertices, uvs, colors32, indices);
             exMesh.FlushBuffers (mesh, meshUpdateFlags, vertices, indices, uvs, colors32);
             if ((meshUpdateFlags & exUpdateFlags.Index) != 0) {
@@ -199,19 +202,6 @@ public abstract class exStandaloneSprite : exSpriteBase {
             return transform.localScale.y;
         }
     }
- 
-    // ------------------------------------------------------------------ 
-    /// Add sprite's geometry data to buffers
-    // ------------------------------------------------------------------ 
-
-    internal override void FillBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32) {
-        UpdateVertexAndIndexCount ();
-        // fill vertex buffer
-        base.FillBuffers (_vertices, _uvs, _colors32);
-        // fill index buffer
-        indices.AddRange (indexCount);
-        updateFlags |= exUpdateFlags.Index;
-    }
 
     // ------------------------------------------------------------------ 
     /// Get world vertices of the sprite
@@ -232,7 +222,7 @@ public abstract class exStandaloneSprite : exSpriteBase {
     ///////////////////////////////////////////////////////////////////////////////
 
     // ------------------------------------------------------------------ 
-    // Desc:
+    /// \NOTE: 此方法调用后必须同时刷新buffer大小
     // ------------------------------------------------------------------ 
 
     protected abstract void UpdateVertexAndIndexCount ();
@@ -251,7 +241,19 @@ public abstract class exStandaloneSprite : exSpriteBase {
             uvs.Clear ();
             colors32.Clear ();
             indices.Clear ();
-            FillBuffers (vertices, uvs, colors32);
+            FillBuffers ();
         }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private void FillBuffers () {
+        vertices.AddRange(vertexCount_);
+        colors32.AddRange(vertexCount_);
+        uvs.AddRange(vertexCount_);
+        indices.AddRange (indexCount_);
+        updateFlags |= exUpdateFlags.All;
     }
 }

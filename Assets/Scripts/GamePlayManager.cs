@@ -11,17 +11,14 @@ public class GamePlayManager : MonoBehaviour
 	}
 
 	public static State state;
-	public GUITexture pauseButton;
-	public Texture pauseIcon;
-	public Texture playIcon;
+	public tk2dUIItem pauseButton;
 	public AudioSource song;
 	public GUIText timeLapse;
 	public PauseMenu pauseMenu;
 	public MicrophoneInput microphoneInput;
-	public GUIText songTitle;
-	public UILabel songTitleNGUI;
-	public GUIText scoreText;
-	public UILabel scoreLabel;
+	public tk2dTextMesh songTitle;
+	public tk2dTextMesh scoreText;
+	public GUIText scoreTextDebug;
 	public UISlider songProgressBar;
 	
 	private float score;
@@ -30,36 +27,39 @@ public class GamePlayManager : MonoBehaviour
 	private NoteFrequencyManager noteFrequencyManager;
 	private NotesManager notesManager;
 	private GlobalSetting globalSetting;
-	
+	private tk2dSprite pauseButtonSprite;
 	
 	void Awake ()
 	{
 		noteFrequencyManager = GameObject.Find (ConstantVariable.MicrophoneManager).GetComponent<NoteFrequencyManager> ();
 		notesManager = GameObject.Find (ConstantVariable.NotesManager).GetComponent<NotesManager> ();
 		globalSetting = GameObject.Find(ConstantVariable.GlobalSetting).GetComponent<GlobalSetting> ();
+		pauseButtonSprite = pauseButton.GetComponentInChildren<tk2dSprite>();
 		
 		if(!globalSetting.debugMode) {
 			dataSend = GameObject.Find (ConstantVariable.DataSend).GetComponent<ObjectSend> ();
 		}
 		
 	}
-	// Use this for initialization
+	
 	void Start ()
 	{
 		if (dataSend != null) {
 			song.clip = dataSend.clip;
-			songTitle.text = dataSend.song.singer + " - " + dataSend.song.title;
-			songTitleNGUI.text = dataSend.song.singer + " - " + dataSend.song.title;
+			songTitle.text = dataSend.song.singer + "\n" + dataSend.song.title;
 			Destroy (dataSend);
 		} else {
-			songTitle.text = "Artist - Unknown";
-			songTitleNGUI.text = "Artist - Unknown";	
+			songTitle.text = "Artist\nUnknown";
 		}
+		
 		state = State.Play;
 		score = 0;
 		matchKey = 0;	
+		
+		//Add event
+		pauseButton.OnClick += PauseButtonClick;
 	}
-	// Update is called once per frame
+	
 	void Update ()
 	{
 		//Debug.Log("Current state: " + state);
@@ -71,24 +71,13 @@ public class GamePlayManager : MonoBehaviour
 			PauseState();
 		}
 		
-		if (Input.GetMouseButtonUp (0)) {
-			bool hit = pauseButton.HitTest (Input.mousePosition);
-			if (hit) {
-				if (state == State.Play) {
-					state = State.Pause;
-					
-				} else if (state == State.Pause) {
-					state = State.Play;		
-					
-				}
-			}
-		}
 	}
-
-	void OnGUI ()
-	{
-		if (state == State.Pause) {
-			
+	
+	private void PauseButtonClick() {
+		if (state == State.Play) {
+			state = State.Pause;
+		} else if (state == State.Pause) {
+			state = State.Play;
 		}
 	}
 
@@ -102,6 +91,7 @@ public class GamePlayManager : MonoBehaviour
 		return display;
 	}
 	
+	//State Play, ketika sedang bermain
 	private void PlayState ()
 	{
 		if (!song.isPlaying) {
@@ -116,8 +106,8 @@ public class GamePlayManager : MonoBehaviour
 			microphoneInput.enabled = true;
 		}
 		
-		if (pauseButton.texture != playIcon) {
-			pauseButton.texture = playIcon;	
+		if(!pauseButtonSprite.CurrentSprite.name.Equals(ConstantVariable.PauseIcon)) {
+			pauseButtonSprite.SetSprite(ConstantVariable.PauseIcon);
 		}
 		
 		float key = Mathf.Round(noteFrequencyManager.key);
@@ -131,8 +121,8 @@ public class GamePlayManager : MonoBehaviour
 			
 		}
 		
-		scoreText.text = "Score: " + score + " \n key: " + key + " (" + modKey + ")\n matchkey: " + matchKey + " (" + modMatchKey + ")";
-		scoreLabel.text = "Score: " + score;
+		scoreTextDebug.text = "Score: " + score + " \n key: " + key + " (" + modKey + ")\n matchkey: " + matchKey + " (" + modMatchKey + ")";
+		scoreText.text = "Score: " + score;
 		timeLapse.text = ConvertToTime (song.time) + " / " + ConvertToTime (song.clip.length);
 		
 		//Song progress bar
@@ -140,6 +130,7 @@ public class GamePlayManager : MonoBehaviour
 		songProgressBar.sliderValue = songPercent;
 	}
 	
+	//State Pause, ketika sedang berhenti
 	private void PauseState ()
 	{
 		if (song.isPlaying) {
@@ -154,8 +145,8 @@ public class GamePlayManager : MonoBehaviour
 			microphoneInput.enabled = false;
 		}
 		
-		if (pauseButton.texture != pauseIcon) {
-			pauseButton.texture = pauseIcon;	
+		if(!pauseButtonSprite.CurrentSprite.name.Equals(ConstantVariable.PlayIcon)) {
+			pauseButtonSprite.SetSprite(ConstantVariable.PlayIcon);
 		}
 	}
 }

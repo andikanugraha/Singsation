@@ -9,10 +9,13 @@ public class LyricsManager : MonoBehaviour
 	public string lyricsFileName;
 	public FileInfo lyrics;
 	public AudioSource song;
+	public tk2dUIScrollableArea lyricsArea;
+	public tk2dTextMesh lyricsText2d;
 	public GUIText lyricsText;
 	public GUIText lyricsTextNext;
 	public GUITexture lyricsElapsed;
 	public GUIText debugText;
+	
 	public UILabel lyricsNGUI;
 	public UILabel lyricsNextNGUI;
 	public UISlider lyricsElapsedNGUI;
@@ -36,28 +39,20 @@ public class LyricsManager : MonoBehaviour
 		timeContainer = new List<float> ();
 		sPattern = @"\[([\d{2}:\d{2}:\d{2}\]])";
 	}
-	// Use this for initialization
+	
 	void Start ()
 	{
 		if (dataSend != null) {
 			//Debug.Log ("Data send ada");
 			lyricsFileName = dataSend.song.lyrics;
 		}
-		lyrics = new FileInfo ("Assets/Resources/Lyrics/" + lyricsFileName);
-		StreamReader reader = lyrics.OpenText ();
-		count = 0;
-		string text; 
-		do {
-			text = reader.ReadLine ();
-			if (ValidateLyricsLine (text)) {
-				lyricsContainer.Add (text);
-				timeContainer.Add (ConvertToTime (text));
-			}
-			//Debug.Log(text);
-		} while (text != null);          
 		
+		//baca file lyrics disimpan ke dalam list lyrics
+		ReadFile();
+		count = 0;
 		
 	}
+	
 	// Update is called once per frame
 	void Update ()
 	{
@@ -65,7 +60,7 @@ public class LyricsManager : MonoBehaviour
 			if (song.time > timeContainer [count + 1]) {
 				count++;	
 			}
-			
+			//lyricsArea.Value = song.time / song.clip.length;
 			if (count < lyricsContainer.Count - 1) {
 				lyricsNGUI.text = TrimLyrics (lyricsContainer [count]);
 				lyricsText.text = TrimLyrics (lyricsContainer [count]);
@@ -82,15 +77,34 @@ public class LyricsManager : MonoBehaviour
 				float percent = interlude / distance;
 				float xPos = lyricsText.transform.position.x;
 				float yPos = lyricsText.transform.position.y;
-
+				lyricsArea.Value = (float) count / (float) lyricsContainer.Count;
+				//lyricsArea.Value = 2f;
+				Debug.Log ("Percent: " + lyricsArea.Value + " count: " + count + " container: " + lyricsContainer.Count);
 				lyricsElapsedNGUI.sliderValue = percent;
 			} else {
 				lyricsText.text = "FINISHED";
 			}
-			
-			
-			
 		}
+	}
+	
+	private void ReadFile(){
+		lyrics = new FileInfo ("Assets/Resources/Lyrics/" + lyricsFileName);
+		StreamReader reader = lyrics.OpenText ();
+		string text; 
+		lyricsText2d.text = "";
+		
+		do {
+			text = reader.ReadLine ();
+			if (ValidateLyricsLine (text)) {
+				lyricsContainer.Add (text);
+				timeContainer.Add (ConvertToTime (text));
+				
+				//Masukkan lyrics ke lyricsText pada layar
+				lyricsText2d.text += TrimLyrics (text) + "\n";
+			}
+			//Debug.Log(text);
+		} while (text != null);  
+		lyricsArea.ContentLength = lyricsArea.MeasureContentLength();
 	}
 
 	private bool ValidateLyricsLine (string text)

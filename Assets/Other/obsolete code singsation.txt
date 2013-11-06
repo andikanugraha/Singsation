@@ -6,3 +6,11 @@
 //noteIndicator.pixelInset = new Rect (x, y, width, height);
 
 lyricsElapsed.pixelInset = new Rect (0, yPos * Screen.height, percent * Screen.width, 10f);
+
+
+//		if (Input.GetMouseButtonUp (0)) {
+//			bool hit = pauseButton.HitTest (Input.mousePosition);
+//			if (hit) {
+//				
+//			}
+//		}

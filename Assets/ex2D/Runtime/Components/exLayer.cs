@@ -40,6 +40,14 @@ public enum exLayerType
 public class exLayer : MonoBehaviour
 {
     public static int maxDynamicMeshVertex = 90000;    ///< 超过这个数量的话，dynamic layer将会自动进行拆分
+
+    // ------------------------------------------------------------------ 
+    /// 实现此接口用于绕开sprite的setter直接给字段赋值
+    // ------------------------------------------------------------------ 
+
+    public interface IFriendOfLayer {
+        void DoSetDepth (float _depth);
+    }
     
     ///////////////////////////////////////////////////////////////////////////////
     // serialized
@@ -135,7 +143,26 @@ public class exLayer : MonoBehaviour
             alphaHasChanged = true;
         }
     }
-
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+    // TODO: save z even if not using custom z
+    [SerializeField] 
+    private float zMin_;
+    public float customZ {
+        get {
+            return zMin_;
+        }
+        set {
+            if (zMin_ == value) {
+                return;
+            }
+            zMin_ = value;
+            SetWorldBoundsMinZ(zMin_);
+        }
+    }
+    
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
@@ -159,13 +186,14 @@ public class exLayer : MonoBehaviour
     // Overridable Functions
     ///////////////////////////////////////////////////////////////////////////////
 
-    // If layer can be standalone, we should check whether the layer belongs to any 2D Renderer, otherwise we need to call GenerateMeshes when OnEnable.
-
     /// \NOTE You should not deactivate the layer manually. 
     ///       If you want to change the visibility of the whole layer, you should set its show property.
     void OnDisable () {
         DestroyMeshes();
     }
+
+    // If layer can be standalone, we should check whether the layer belongs to any 2D Renderer, 
+    // otherwise we need to call GenerateMeshes when OnEnable.
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
@@ -190,15 +218,12 @@ public class exLayer : MonoBehaviour
                     mesh.gameObject.Destroy ();
                 }
                 meshList.RemoveAt (m);
-
-                if (m - 1 > 0 && m < meshList.Count) {
+                if (m - 1 >= 0 && m < meshList.Count) {
                     int maxVertexCount = (layerType_ == exLayerType.Dynamic) ? maxDynamicMeshVertex : exMesh.MAX_VERTEX_COUNT;
                     if (meshList [m - 1].vertices.Count < maxVertexCount) {
                         ShiftSpritesDown (m - 1, maxVertexCount, maxVertexCount);
                     }
                 }
-
-                UpdateMeshDebugName (m);
             }
             else {
                 ++m;
@@ -218,8 +243,10 @@ public class exLayer : MonoBehaviour
                     //if (sprite.transparent == false) {
                         sprite.UpdateTransform();
                     //}
-                    exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
-                    meshUpdateFlags |= spriteUpdateFlags;
+                    if (sprite.updateFlags != exUpdateFlags.None) {
+                        exUpdateFlags spriteUpdateFlags = sprite.UpdateBuffers(mesh.vertices, mesh.uvs, mesh.colors32, mesh.indices);
+                        meshUpdateFlags |= spriteUpdateFlags;
+                    }
                 }
             }
             mesh.Apply(meshUpdateFlags);
@@ -298,7 +325,7 @@ public class exLayer : MonoBehaviour
             if (_sprite.spriteIdInLayer == nextSpriteUniqueId - 1 && nextSpriteUniqueId > 0) {
                 --nextSpriteUniqueId;
             }
-            _sprite.spriteIdInLayer = 0; 
+            _sprite.spriteIdInLayer = 0;
         }
     }
     
@@ -448,23 +475,75 @@ public class exLayer : MonoBehaviour
         //    sprite.indexBufferIndex = -1;
         //    sprite.layer = null;
         //}
+        exLayeredSprite[] spriteList = GetComponentsInChildren<exLayeredSprite>(true);
+        foreach (exLayeredSprite sprite in spriteList) {
+            if (sprite != null) {
+                if (sprite.layer != null && ReferenceEquals(sprite.layer, this) == false) {
+                    Debug.LogError("Sprite's hierarchy is invalid!", sprite);
+                }
+                sprite.ResetLayerProperties();
+            }
+        }
         for (int i = meshList.Count - 1; i >= 0; --i) {
             exMesh mesh = meshList[i];
             if (mesh != null) {
-                for (int s = 0; s < mesh.spriteList.Count; ++s) {
-                    exLayeredSprite sprite = mesh.spriteList[s];
-                    exDebug.Assert(sprite != null);
-                    if (sprite != null) {
-                        sprite.ResetLayerProperties();
-                    }
-                }
                 // 这里不应该使用Destroy，因为当停止执行editor的当时，Destroy不会根据editor下的行为自动使用DestroyImmediate，会导致layer的mesh无法被销毁的情况出现
                 mesh.gameObject.DestroyImmediate();
             }
         }
         meshList.Clear();
     }
+
+    // ------------------------------------------------------------------ 
+    /// Desc:
+    // ------------------------------------------------------------------ 
+
+    internal void SetSpriteDepth (exLayeredSprite _sprite, float _newDepth) {
+        int oldMeshIndex = IndexOfMesh (_sprite);
+        exDebug.Assert(oldMeshIndex != -1);
+        exMesh mesh = meshList[oldMeshIndex];
+        float oldDepth = _sprite.depth;
+        bool addDepth = _newDepth > oldDepth;
+        // apply depth change
+        (_sprite as IFriendOfLayer).DoSetDepth(_newDepth);
+        //
+        if (IsRenderOrderChangedBetweenMesh(_sprite, oldMeshIndex, addDepth)) {
+            RemoveFromMesh (_sprite, mesh); // 这里需要保证depth改变后也能正常remove
+            AddToMesh(_sprite, GetMeshToAdd(_sprite));
+        }
+        else {
+            // get old render order in mesh
+            // TODO: remove DoSetDepth
+            (_sprite as IFriendOfLayer).DoSetDepth(oldDepth);
+            int oldSortedSpriteIndex = mesh.sortedSpriteList.BinarySearch(_sprite);
+            exDebug.Assert(oldSortedSpriteIndex >= 0);
+            (_sprite as IFriendOfLayer).DoSetDepth(_newDepth);
+            //
+            if (IsRenderOrderChangedInMesh(_sprite, oldMeshIndex, oldSortedSpriteIndex, addDepth)) {
+                RemoveFromMesh (_sprite, mesh); // 这里需要保证depth改变后也能正常remove
+                AddToMesh(_sprite, mesh);
+            }
+        }
+    }
     
+    // ------------------------------------------------------------------ 
+    /// 用于更新sprite的depth、material、vertex count等数据
+    // ------------------------------------------------------------------ 
+
+    internal void OnPreSpriteChange (exLayeredSprite _sprite) {
+        int meshIndex = IndexOfMesh(_sprite);
+        if (meshIndex != -1) {
+            RemoveFromMesh (_sprite, meshList[meshIndex]);
+        }
+    }
+    
+    // ------------------------------------------------------------------ 
+    /// 用于更新sprite的depth、material、vertex count等数据
+    // ------------------------------------------------------------------ 
+
+    internal void OnAfterSpriteChange (exLayeredSprite _sprite) {
+        AddToMesh(_sprite, GetMeshToAdd(_sprite));
+    }
 
     // ------------------------------------------------------------------ 
     /// To update scene view in edit mode immediately
@@ -513,24 +592,35 @@ public class exLayer : MonoBehaviour
         mesh.material = _mat;
         mesh.SetDynamic(layerType_ == exLayerType.Dynamic);
         meshList.Insert(_index, mesh);
-        UpdateMeshDebugName(_index);
+        mesh.UpdateDebugName(this);
         ex2DRenderer.instance.ResortLayerDepth();
         return mesh;
     }
-    
+
     // ------------------------------------------------------------------ 
-    // Desc:
+    /// 从当前mesh list里查找空的mesh，如果找到则直接拿来用，找不到则创建一个新的
     // ------------------------------------------------------------------ 
 
-    [System.Diagnostics.Conditional("UNITY_EDITOR"), System.Diagnostics.Conditional("EX_DEBUG")]
-    private void UpdateMeshDebugName (int _start) {
-#if UNITY_EDITOR || EX_DEBUG
-        for (int i = _start; i < meshList.Count; ++i) {
-            if (meshList[i] != null) {
-                meshList[i].UpdateDebugName (this);
+    private exMesh GetNewMesh (Material _mat, int _index) {
+        for (int i = 0; i < meshList.Count; i++) {
+            exMesh mesh = meshList[i];
+            if (mesh != null && mesh.spriteList.Count == 0) {
+                mesh.material = _mat;
+                mesh.UpdateDebugName(this);
+                if (i < _index) {
+                    meshList.RemoveAt(i);
+                    meshList.Insert(_index - 1, mesh);
+                    ex2DRenderer.instance.ResortLayerDepth();
+                }
+                else if (i > _index) {
+                    meshList.RemoveAt(i);
+                    meshList.Insert(_index, mesh);
+                    ex2DRenderer.instance.ResortLayerDepth();
+                }
+                return mesh;
             }
         }
-#endif
+        return CreateNewMesh(_mat, _index);
     }
 
     // ------------------------------------------------------------------ 
@@ -595,7 +685,7 @@ public class exLayer : MonoBehaviour
                 exMesh dstMesh;
                 bool noAboveMesh = (_meshIndex == meshList.Count - 1 || ReferenceEquals (meshList [_meshIndex + 1].material, mesh.material) == false);
                 if (noAboveMesh) {
-                    dstMesh = CreateNewMesh (mesh.material, _meshIndex + 1);
+                    dstMesh = GetNewMesh (mesh.material, _meshIndex + 1);
                     exDebug.Assert (dstMesh.vertices.Count + realDelta <= _maxVertexCount);
                 }
                 else {
@@ -731,7 +821,7 @@ public class exLayer : MonoBehaviour
             
             //split mesh if batch failed
             exDebug.Assert(exLayeredSprite.enableFastShowHide);    // 要获取mesh中最先和最后渲染的sprite，要保证sprite都在sortedSpriteList中
-            if (mesh.sortedSpriteList.Count == 0) continue;
+            if (mesh.sortedSpriteList.Count == 0) continue;        // 跳过空的mesh，尽量把sprite合并到已有的mesh里面
 
             exLayeredSprite top = mesh.sortedSpriteList[mesh.sortedSpriteList.Count - 1];
             bool aboveTopSprite = _sprite >= top;
@@ -740,7 +830,7 @@ public class exLayer : MonoBehaviour
                     return mesh;
                 }
                 else {
-                    return CreateNewMesh(mat, i + 1);   //在mesh上层创建一个新mesh
+                    return GetNewMesh(mat, i + 1);   //在mesh上层创建一个新mesh
                 }
             }
             else {
@@ -760,7 +850,7 @@ public class exLayer : MonoBehaviour
                         // 两个相同材质的sprite中间插入了另一个材质的sprite，则需要将上下两个sprite拆分到两个不同的mesh
                         // 然后将上面的sprite往上移动，直到该mesh只包含下面的sprite，然后插入其它材质的mesh
                         SplitMesh(i, _sprite, maxVertexCount);
-                        return CreateNewMesh(mat, i + 1);
+                        return GetNewMesh(mat, i + 1);
                     }
                 }
                 // 否则和bot的深度相等，这时交由下层的mesh去处理
@@ -773,13 +863,13 @@ public class exLayer : MonoBehaviour
                 return bottomMesh;
             }
             // 在最下面创建一个新mesh
-            exMesh newMesh = CreateNewMesh(mat, 0);
+            exMesh newMesh = GetNewMesh(mat, 0);
             if (ReferenceEquals(bottomMesh.material, mat)) {
                 ShiftSpritesDown(0, restVertexCount, maxVertexCount);   // 向下把mesh都填满
             }
             return newMesh;
         }
-        return CreateNewMesh(mat, 0);
+        return GetNewMesh(mat, 0);
     }
     
     // ------------------------------------------------------------------ 
@@ -845,24 +935,29 @@ public class exLayer : MonoBehaviour
 
     private void RemoveFromMesh (exLayeredSprite _sprite, exMesh _mesh) {
         _mesh.spriteList.RemoveAt(_sprite.spriteIndexInMesh);
+        int vertexCount = _sprite.vertexCount;
         for (int i = _sprite.spriteIndexInMesh; i < _mesh.spriteList.Count; ++i) {
             exLayeredSprite sprite = _mesh.spriteList[i];
             // update sprite and vertic index after removed sprite
             sprite.spriteIndexInMesh = i;
-            sprite.vertexBufferIndex -= _sprite.vertexCount;
+            sprite.vertexBufferIndex -= vertexCount;
             // update indices to make them match new vertic index
             if (sprite.isInIndexBuffer) {
-                for (int index = sprite.indexBufferIndex; index < sprite.indexBufferIndex + sprite.indexCount; ++index) {
-                    _mesh.indices.buffer[index] -= _sprite.vertexCount;
+                int indexEnd = sprite.indexBufferIndex + sprite.indexCount;
+                for (int index = sprite.indexBufferIndex; index < indexEnd; ++index) {
+                    if (index >= _mesh.indices.Count) {
+                        Debug.Log(string.Format("[RemoveFromMesh|exLayer] index: {1} _mesh.indices.Count: {0}", _mesh.indices.Count, index));
+                    }
+                    _mesh.indices.buffer[index] -= vertexCount;
                 }
             }
         }
         _mesh.updateFlags |= exUpdateFlags.VertexAndIndex;
 
         // update vertices
-        _mesh.vertices.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
-        _mesh.colors32.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
-        _mesh.uvs.RemoveRange(_sprite.vertexBufferIndex, _sprite.vertexCount);
+        _mesh.vertices.RemoveRange(_sprite.vertexBufferIndex, vertexCount);
+        _mesh.colors32.RemoveRange(_sprite.vertexBufferIndex, vertexCount);
+        _mesh.uvs.RemoveRange(_sprite.vertexBufferIndex, vertexCount);
 
 #if FORCE_UPDATE_VERTEX_INFO
         bool removeLastSprite = (_sprite.spriteIndexInMesh == _mesh.spriteList.Count);
@@ -914,6 +1009,7 @@ public class exLayer : MonoBehaviour
             }
             // insert range into _indices
             int indexCount = _sprite.indexCount;
+            exDebug.Assert(indexCount > 0);
             _mesh.indices.AddRange(indexCount);
             for (int i = _mesh.indices.Count - 1 - indexCount; i >= _sprite.indexBufferIndex ; --i) {
                 _mesh.indices.buffer[i + indexCount] = _mesh.indices.buffer[i];
@@ -955,5 +1051,69 @@ public class exLayer : MonoBehaviour
             }
             _sprite.isInIndexBuffer = false;
         }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private exLayeredSprite GetNearestSpriteFromBelowMesh (int _curMeshIndex) {
+        for (int belowMeshIndex = _curMeshIndex - 1; belowMeshIndex >= 0; --belowMeshIndex) {
+            exMesh belowMesh = meshList[belowMeshIndex];
+            if (belowMesh != null && belowMesh.sortedSpriteList.Count > 0) {
+                return belowMesh.sortedSpriteList[belowMesh.sortedSpriteList.Count - 1];
+            }
+        }
+        return null;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private exLayeredSprite GetNearestSpriteFromAboveMesh (int _curMeshIndex) {
+        for (int aboveMeshIndex = _curMeshIndex + 1; aboveMeshIndex < meshList.Count; ++aboveMeshIndex) {
+            exMesh aboveMesh = meshList[aboveMeshIndex];
+            if (aboveMesh != null && aboveMesh.sortedSpriteList.Count > 0) {
+                return aboveMesh.sortedSpriteList[0];
+            }
+        }
+        return null;
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private bool IsRenderOrderChangedBetweenMesh (exLayeredSprite _sprite, int _oldMeshIndex, bool _addDepth) { 
+        if (_addDepth) {
+            exLayeredSprite aboveSprite = GetNearestSpriteFromAboveMesh(_oldMeshIndex);
+            return (aboveSprite != null && _sprite > aboveSprite);
+        }
+        else {
+            exLayeredSprite belowSprite = GetNearestSpriteFromBelowMesh(_oldMeshIndex);
+            return (belowSprite != null && _sprite < belowSprite);
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    private bool IsRenderOrderChangedInMesh (exLayeredSprite _sprite, int _oldMeshIndex, int _oldSortedSpriteIndex, bool _addDepth) { 
+        exMesh mesh = meshList[_oldMeshIndex];
+        if (_addDepth) {
+            if (_oldSortedSpriteIndex < mesh.sortedSpriteList.Count - 1) {
+                exLayeredSprite aboveSprite = mesh.sortedSpriteList[_oldSortedSpriteIndex + 1];
+                return (_sprite > aboveSprite); // 是否要更后渲染;
+            }
+        }
+        else {
+            if (_oldSortedSpriteIndex > 0) {
+                exLayeredSprite belowSprite = mesh.sortedSpriteList[_oldSortedSpriteIndex - 1];
+                return (_sprite < belowSprite);
+            }
+        }
+        return false;
     }
 }

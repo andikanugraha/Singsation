@@ -29,4 +29,8 @@ public class ConstantVariable : MonoBehaviour {
 	public const int LyricsDepth = 9;
 	public const int MicNoteDepth = 10;
 	
+	
+	//Collection atlas
+	public const string PauseIcon = "Pause Icon";
+	public const string PlayIcon = "Play Icon";
 }

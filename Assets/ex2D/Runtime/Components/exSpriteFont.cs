@@ -26,7 +26,7 @@ public enum exOutlineType {
 
 ///////////////////////////////////////////////////////////////////////////////
 /// 
-/// A component to render exBitmapFont in the layer 
+/// A component to render exFont in the layer 
 /// 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -37,41 +37,18 @@ public class exSpriteFont : exLayeredSprite {
     // serialized
     ///////////////////////////////////////////////////////////////////////////////
 
-    // ------------------------------------------------------------------ 
-    [SerializeField] protected exBitmapFont font_;
-    /// The referenced bitmap font asset
-    // ------------------------------------------------------------------ 
+    /// 每个exSpriteFont都有单独的一个exFont实例
+    [SerializeField] protected exFont font_ = new exFont();
+    
+    public exBitmapFont bitmapFont {
+        get {
+            return font_.bitmapFont;
+        }
+    }
 
-    public exBitmapFont font {
-        get { return font_; }
-        set {
-            if (ReferenceEquals(font_, value)) {
-                return;
-            }
-            if (value != null) {
-                if (value.texture == null) {
-                    Debug.LogWarning("invalid bitmap font texture");
-                }
-                updateFlags |= exUpdateFlags.Text;
-
-                if (font_ == null || ReferenceEquals(font_.texture, value.texture) == false) {
-                    // texture changed
-                    font_ = value;
-                    UpdateMaterial();   // 前面update过text了
-                    return;
-                }
-                if (layer_ != null && isOnEnabled_ && visible == false) {
-                    font_ = value;
-                    if (visible) {
-                        Show();
-                    }
-                }
-            }
-            else if (layer_ != null && visible) {
-                // become invisible
-                Hide();
-            }
-            font_ = value;
+    public Font dynamicFont {
+        get {
+            return font_.dynamicFont;
         }
     }
 
@@ -95,6 +72,42 @@ public class exSpriteFont : exLayeredSprite {
                 if (oldText.Length != text_.Length) {
                     UpdateCapacity();   // TODO: 如果在一帧内反复修改文本，会造成多余的layer改动，考虑留到update时再处理
                 }
+                updateFlags |= exUpdateFlags.Text;
+            }
+        }
+    }
+
+/*    public int lineHeight {
+        get {
+            return font_.lineHeight;
+        }
+        set {
+            if (font_.lineHeight != value) {
+                font_.lineHeight = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }*/
+
+    public int fontSize {
+        get {
+            return font_.fontSize;
+        }
+        set {
+            if (font_.fontSize != value) {
+                font_.fontSize = value;
+                updateFlags |= exUpdateFlags.Text;
+            }
+        }
+    }
+
+    public FontStyle fontStyle {
+        get {
+            return font_.fontStyle;
+        }
+        set {
+            if (font_.fontStyle != value) {
+                font_.fontStyle = value;
                 updateFlags |= exUpdateFlags.Text;
             }
         }
@@ -297,24 +310,36 @@ public class exSpriteFont : exLayeredSprite {
         }
     }
 
+#if UNITY_EDITOR
+    
+    /// 该属性仅供编辑器使用，用户直接调用SetFont方法即可，无需设置类型。
+    public exFont.TypeForEditor fontType {
+        get {
+            return font_.type;
+        }
+        set {
+            if (font_.type != value) {
+                font_.type = value;
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+        }
+    }
+
+#endif
+
     ///////////////////////////////////////////////////////////////////////////////
     // non-serialized
     ///////////////////////////////////////////////////////////////////////////////
 
     protected override Texture texture {
         get {
-            if (font_ != null) {
-                return font_.texture;
-            }
-            else {
-                return null;
-            }
+            return font_.texture;
         }
     }
 
     public override bool visible {
         get {
-            return isOnEnabled_ && font_ != null && font_.texture != null && font_.charInfos.Count > 0;
+            return isOnEnabled && font_.isValid;
         }
     }
     
@@ -328,11 +353,27 @@ public class exSpriteFont : exLayeredSprite {
         set { height_ = value; }
     }
     
-    [System.NonSerialized] private bool lockCapacity = false;
-    
     ///////////////////////////////////////////////////////////////////////////////
     // Overridable functions
     ///////////////////////////////////////////////////////////////////////////////
+    
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected new void OnEnable () {
+        font_.textureRebuildCallback += OnFontTextureRebuilt;
+        base.OnEnable();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc:
+    // ------------------------------------------------------------------ 
+
+    protected new void OnDisable () {
+        base.OnDisable();
+        font_.textureRebuildCallback -= OnFontTextureRebuilt;
+    }
 
     #region Functions used to update geometry buffer
 
@@ -352,21 +393,42 @@ public class exSpriteFont : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     internal override exUpdateFlags UpdateBuffers (exList<Vector3> _vertices, exList<Vector2> _uvs, exList<Color32> _colors32, exList<int> _indices) {
-        if (updateFlags == exUpdateFlags.None) {
-            return exUpdateFlags.None;
+        // save dirty flag because SpriteFontBuilder.UpdateBuffers will overwrite it
+        exUpdateFlags applyedFlags = exUpdateFlags.None;
+        bool transparentDirty = (updateFlags & exUpdateFlags.Transparent) != 0;
+        if (transparentDirty) {
+            updateFlags &= ~exUpdateFlags.Transparent;
+            if (transparent_) {
+                updateFlags &= ~exUpdateFlags.Vertex;
+            }
+            else { 
+                updateFlags |= exUpdateFlags.Vertex;
+            }
+            applyedFlags |= (exUpdateFlags.Transparent | exUpdateFlags.Vertex);
         }
-        else {
-            SpriteFontParams sfp;
-            sfp.text = text_;
-            sfp.font = font_;
-            sfp.spacing = spacing_;
-            sfp.textAlign = textAlign_;
-            sfp.useKerning = useKerning_;
-            sfp.vertexCount = vertexCount_;
-            sfp.indexCount = indexCount_;
-            return SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, layer_.alpha, 
-                                                   _vertices, _uvs, _colors32, _indices, vertexBufferIndex, indexBufferIndex);
+        else if (transparent_ && (updateFlags & exUpdateFlags.Vertex) != 0) {
+            updateFlags &= ~exUpdateFlags.Vertex;
         }
+
+        SpriteFontParams sfp;
+        sfp.text = text_;
+        sfp.font = font_;
+        sfp.spacing = spacing_;
+        sfp.textAlign = textAlign_;
+        sfp.useKerning = useKerning_;
+        sfp.vertexCount = vertexCount_;
+        sfp.indexCount = indexCount_;
+        applyedFlags |= SpriteFontBuilder.UpdateBuffers (this, ref sfp, Space.World, ref topColor_, ref botColor_, layer_.alpha, 
+                                                _vertices, _uvs, _colors32, _indices, vertexBufferIndex, indexBufferIndex);
+        
+        if (transparentDirty && transparent_) {
+            // 如果有exUpdateFlags.Text一样会被UpdateBuffers显示出来，需要重新设为不可见
+            Vector3 samePoint = _vertices.buffer[0];
+            for (int i = 1; i < vertexCount_; ++i) {
+                _vertices.buffer[vertexBufferIndex + i] = samePoint;
+            }
+        }
+        return applyedFlags;
     }
 
     #endregion  // Functions used to update geometry buffer
@@ -377,9 +439,9 @@ public class exSpriteFont : exLayeredSprite {
 
     protected override Vector3[] GetVertices (Space _space) {
         // TODO: only return the rotated bounding box of the sprite font
-        int visibleVertexCount = text_.Length * 4;
         exList<Vector3> vertices = exList<Vector3>.GetTempList();
-        vertices.AddRange(visibleVertexCount);
+        vertices.AddRange(vertexCount_);
+        exDebug.Assert(vertexCount_ >= text_.Length * 4);
         
         SpriteFontParams sfp;
         sfp.text = text_;
@@ -399,15 +461,39 @@ public class exSpriteFont : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     protected override void OnPreAddToLayer () {
-        exDebug.Assert(layer_ == null);
-        if (layer_ == null) {
-            UpdateCapacity();
-        }
+        UpdateCapacity();
     }
+
+    //// ------------------------------------------------------------------ 
+    //// Desc:
+    //// ------------------------------------------------------------------ 
+    // 这里不做优化，因为隐藏时就算重建贴图，消耗也只是加上updateFlag，只有显示时才会刷新
+    //protected override void Hide () {
+    //    base.Hide();
+    //    font_.textureRebuildCallback -= OnFontTextureRebuilt;
+    //}
 
     ///////////////////////////////////////////////////////////////////////////////
     // Public Functions
     ///////////////////////////////////////////////////////////////////////////////
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void SetFont (exBitmapFont _bitmapFont) {
+        font_.Set(_bitmapFont);
+        UpdateTexture();
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    public void SetFont (Font _dynamicFont) {
+        font_.Set(_dynamicFont);
+        UpdateTexture();
+    }
 
     //            // update outline
     //            if ( useOutline_ ) {
@@ -619,6 +705,21 @@ public class exSpriteFont : exLayeredSprite {
     // Desc: 
     // ------------------------------------------------------------------ 
 
+    void UpdateTexture () {
+        if (font_.texture != null) {
+            updateFlags |= exUpdateFlags.Text;
+            UpdateMaterial();
+        }
+        else if (layer_ != null) {
+            // become invisible
+            Hide();
+        }
+    }
+
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
     int GetTextCapacity (int _oldTextCapacity) {
         if (text_ == null) {
             return 0;
@@ -669,32 +770,29 @@ public class exSpriteFont : exLayeredSprite {
     // ------------------------------------------------------------------ 
 
     void UpdateCapacity () {
-        if (lockCapacity) {
-            exDebug.Assert(text_ == null || vertexCount_ >= text_.Length * exMesh.QUAD_VERTEX_COUNT);
-            return;
-        }
         int oldTextCapacity = vertexCount_ / exMesh.QUAD_VERTEX_COUNT;
-        int textCapacity = GetTextCapacity(oldTextCapacity);
+        int textCapacity = Mathf.Max(GetTextCapacity(oldTextCapacity), 1);  // layered sprite should always have at lease one quad
         
         if (textCapacity != oldTextCapacity) {
             if (layer_ != null) {
-                // remove from layer
-                exLayer myLayer = layer_;
-                myLayer.Remove(this, false);
-                // change capacity
+                layer_.OnPreSpriteChange(this);
                 vertexCount_ = textCapacity * exMesh.QUAD_VERTEX_COUNT;
                 indexCount_ = textCapacity * exMesh.QUAD_INDEX_COUNT;
-                // re-add to layer
-                lockCapacity = true;
-                myLayer.Add(this, false);
-                //Debug.Log("Update Capacity");
-                lockCapacity = false;
+                layer_.OnAfterSpriteChange(this);
             }
             else {
                 vertexCount_ = textCapacity * exMesh.QUAD_VERTEX_COUNT;
                 indexCount_ = textCapacity * exMesh.QUAD_INDEX_COUNT;
             }
         }
+    }
+    
+    // ------------------------------------------------------------------ 
+    // Desc: 
+    // ------------------------------------------------------------------ 
+
+    void OnFontTextureRebuilt () {
+        updateFlags |= exUpdateFlags.Text;  // TODO: only need to update UV
     }
 }
 
@@ -710,7 +808,7 @@ namespace ex2D.Detail {
 
     internal struct SpriteFontParams {
         public string text;
-        public exBitmapFont font;
+        public exFont font;
         public Vector2 spacing;
         public TextAlignment textAlign;
         public bool useKerning;
@@ -748,6 +846,7 @@ namespace ex2D.Detail {
                 return _sprite.updateFlags;
             }
 #endif
+            //Debug.Log(string.Format("[UpdateBuffers|SpriteFontBuilder] _vbIndex: {0} _ibIndex: {1}", _vbIndex, _ibIndex));
             if ((_sprite.updateFlags & exUpdateFlags.Text) != 0) {
                 //exDebug.Assert(cachedWorldMatrix == cachedTransform.localToWorldMatrix);
                 BuildText(_sprite, ref sfp, _space, _vertices, _vbIndex, _uvs);
@@ -799,12 +898,16 @@ namespace ex2D.Detail {
         // ------------------------------------------------------------------ 
 
         public static void BuildText (exSpriteBase _sprite, ref SpriteFontParams sfp, Space _space, exList<Vector3> _vertices, int _vbIndex, exList<Vector2> _uvs = null) {
-            // TODO: use space instead of _spriteMatrix
+
+            // It is advisable to always call RequestCharactersInTexture for any text on the screen you wish to render using custom font rendering functions, 
+            // even if the characters are currently present in the texture, to make sure they don't get purged during texture rebuild.
+            sfp.font.RequestCharactersInTexture (sfp.text);
+            
             _sprite.width = 0.0f;    // 和SpriteBase一致，用于表示实际宽度
             _sprite.height = 0.0f;   // 和SpriteBase一致，用于表示实际高度
             int invisibleVertexStart = -1;
             int visibleVertexCount;
-            if (sfp.font != null) {
+            if (sfp.font.isValid) {
                 BuildTextInLocalSpace(_sprite, ref sfp, _vertices, _vbIndex, _uvs);
                 visibleVertexCount = sfp.text.Length * 4;
             }
@@ -813,11 +916,10 @@ namespace ex2D.Detail {
                 visibleVertexCount = 0;
             }
             if (_sprite.vertexCount > visibleVertexCount) {
-                invisibleVertexStart = visibleVertexCount;
-                _vertices.buffer[invisibleVertexStart + 0] = new Vector3();
-                _vertices.buffer[invisibleVertexStart + 1] = new Vector3();
-                _vertices.buffer[invisibleVertexStart + 2] = new Vector3();
-                _vertices.buffer[invisibleVertexStart + 3] = new Vector3();
+                // hide invisible vertex
+                for (int i = _vbIndex + visibleVertexCount, iMax = _vbIndex + _sprite.vertexCount; i < iMax; ++i) {
+                    _vertices.buffer[i] = new Vector3();
+                }
             }
 
             // calculate anchor and offset
@@ -951,7 +1053,7 @@ namespace ex2D.Detail {
                 if (lineWidth > _sprite.width) {
                     _sprite.width = lineWidth;
                 }
-                _sprite.height += sfp.font.lineHeight;
+                _sprite.height += sfp.font.fontSize;
                 if (charIndex < sfp.text.Length) {
                     _sprite.height += sfp.spacing.y;
                 }
@@ -971,7 +1073,7 @@ namespace ex2D.Detail {
             for (; _charIndex < sfp.text.Length; ++_charIndex, _vbIndex += 4, curX += sfp.spacing.x) {
                 char c = sfp.text[_charIndex];
                 
-                // if new line  // TODO: auto wrap
+                // if new line
                 if (c == '\n') {
                     _vertices.buffer[_vbIndex + 0] = new Vector3();
                     _vertices.buffer[_vbIndex + 1] = new Vector3();
@@ -989,9 +1091,9 @@ namespace ex2D.Detail {
                         curX += sfp.font.GetKerning(sfp.text[_charIndex - 1], c);
                     }
                 }
-                
-                exBitmapFont.CharInfo ci = sfp.font.GetCharInfo(c);
-                if (ci == null) {
+
+                CharacterInfo ci;
+                if (sfp.font.GetCharInfo(c, out ci) == false) {
                     // character is not present, it will not display
                     // Debug.Log("character is not present: " + c, this);
                     _vertices.buffer[_vbIndex + 0] = new Vector3();
@@ -1000,33 +1102,31 @@ namespace ex2D.Detail {
                     _vertices.buffer[_vbIndex + 3] = new Vector3();
                     continue;
                 }
+
+                float x = curX;
+                float y = _top;
+                _vertices.buffer[_vbIndex + 0] = new Vector3(x + ci.vert.xMin, y + ci.vert.yMax, 0.0f);
+                _vertices.buffer[_vbIndex + 1] = new Vector3(x + ci.vert.xMin, y + ci.vert.yMin, 0.0f);
+                _vertices.buffer[_vbIndex + 2] = new Vector3(x + ci.vert.xMax, y + ci.vert.yMin, 0.0f);
+                _vertices.buffer[_vbIndex + 3] = new Vector3(x + ci.vert.xMax, y + ci.vert.yMax, 0.0f);
                 
-                // build text vertices
-                float x = curX + ci.xoffset;
-                float y = _top - ci.yoffset;
-                _vertices.buffer[_vbIndex + 0] = new Vector3(x, y - ci.height, 0.0f);
-                _vertices.buffer[_vbIndex + 1] = new Vector3(x, y, 0.0f);
-                _vertices.buffer[_vbIndex + 2] = new Vector3(x + ci.width, y, 0.0f);
-                _vertices.buffer[_vbIndex + 3] = new Vector3(x + ci.width, y - ci.height, 0.0f);
-                
-                lastWidth = ci.width;
-                lastAdvance = ci.xadvance;
-                
+                // advance x
+                lastWidth = ci.vert.width;
+                lastAdvance = ci.width;
+
                 // build uv
                 if (_uvs != null) {
-                    Vector2 start = new Vector2(ci.x * _texelSize.x, ci.y * _texelSize.y);
-                    Vector2 end = new Vector2((ci.x + ci.rotatedWidth) * _texelSize.x, (ci.y + ci.rotatedHeight) * _texelSize.y);
-                    if (ci.rotated) {
-                        _uvs.buffer[_vbIndex + 0] = new Vector2(end.x, start.y);
-                        _uvs.buffer[_vbIndex + 1] = start;
-                        _uvs.buffer[_vbIndex + 2] = new Vector2(start.x, end.y);
-                        _uvs.buffer[_vbIndex + 3] = end;
+                    if (ci.flipped) {
+                        _uvs.buffer [_vbIndex + 0] = new Vector2 (ci.uv.xMin, ci.uv.yMin);
+                        _uvs.buffer [_vbIndex + 1] = new Vector2 (ci.uv.xMax, ci.uv.yMin);
+                        _uvs.buffer [_vbIndex + 2] = new Vector2 (ci.uv.xMax, ci.uv.yMax);
+                        _uvs.buffer [_vbIndex + 3] = new Vector2 (ci.uv.xMin, ci.uv.yMax);
                     }
                     else {
-                        _uvs.buffer[_vbIndex + 0] = start;
-                        _uvs.buffer[_vbIndex + 1] = new Vector2(start.x, end.y);
-                        _uvs.buffer[_vbIndex + 2] = end;
-                        _uvs.buffer[_vbIndex + 3] = new Vector2(end.x, start.y);
+                        _uvs.buffer [_vbIndex + 0] = new Vector2 (ci.uv.xMin, ci.uv.yMin);
+                        _uvs.buffer [_vbIndex + 1] = new Vector2 (ci.uv.xMin, ci.uv.yMax);
+                        _uvs.buffer [_vbIndex + 2] = new Vector2 (ci.uv.xMax, ci.uv.yMax);
+                        _uvs.buffer [_vbIndex + 3] = new Vector2 (ci.uv.xMax, ci.uv.yMin);
                     }
                 }
             }

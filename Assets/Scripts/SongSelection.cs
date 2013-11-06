@@ -18,6 +18,7 @@ public class SongSelection : MonoBehaviour
 	
 	public tk2dUIScrollableArea songContent;
 	public GameObject songButtonPrefabs;
+	public GameObject playButton;
 	
 	private bool musicPlay;
 	private GUIStyle guiStyle = new GUIStyle ();
@@ -27,7 +28,8 @@ public class SongSelection : MonoBehaviour
 	private List<AudioClip> listClip;
 	private SongContainer songSelected;
 	private float hScrollbarValue = 0;
-
+	private tk2dUIItem playButtonUIItem;
+	
 	void Awake ()
 	{
 		//DontDestroyOnLoad (this);
@@ -36,10 +38,14 @@ public class SongSelection : MonoBehaviour
 		listImage = new List<Texture> ();
 		listClip = new List<AudioClip> ();
 		texts = new List<GUIText> ();
+		playButtonUIItem = playButton.GetComponent<tk2dUIItem>();
 	}
 
 	void Start ()
 	{
+		//Add Event
+		playButtonUIItem.OnClick += PlayButtonClick;
+		
 		songSelected = null;
 		musicPlay = false;
 		float pos = 0;
@@ -113,10 +119,25 @@ public class SongSelection : MonoBehaviour
 
 	}
 	
-	public void SelectMusic(SongContainer song, AudioClip clip) {
+	public void SelectMusic(SongContainer song, AudioClip clip, GameObject songButton) {
 		dataSend.song = songSelected = song;
 		dataSend.clip = music.clip = clip;
 		musicPlay = true;
+		Vector3 position = songButton.transform.localPosition;
+		//position.x = position.x + collider.transform.localPosition.x;
+		//position.y = position.y + collider.transform.localPosition.y;
+		
+		//position = songButton.collider.bounds.center;
+		position.z -= 1;
+		Debug.Log("Position : " + position);
+		playButton.transform.localPosition = position;
+		
+	}
+	
+	//Play Game
+	public void PlayButtonClick() {
+		Debug.Log("PLAY!");
+		Application.LoadLevel ("Play");
 	}
 	
 	public void CreateSong (SongContainer song, Texture image, AudioClip clip, Vector3 position) {
