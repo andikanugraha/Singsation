@@ -19,7 +19,7 @@ public class GamePlayManager : MonoBehaviour
 	public tk2dTextMesh songTitle;
 	public tk2dTextMesh scoreText;
 	public GUIText scoreTextDebug;
-	public UISlider songProgressBar;
+	public tk2dUIProgressBar songProgressBar;
 	
 	private float score;
 	private float matchKey;
@@ -127,7 +127,7 @@ public class GamePlayManager : MonoBehaviour
 		
 		//Song progress bar
 		float songPercent = song.time / song.clip.length;
-		songProgressBar.sliderValue = songPercent;
+		songProgressBar.Value = songPercent;
 	}
 	
 	//State Pause, ketika sedang berhenti

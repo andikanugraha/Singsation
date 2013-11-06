@@ -16,8 +16,6 @@ public class LyricsManager : MonoBehaviour
 	public GUITexture lyricsElapsed;
 	public GUIText debugText;
 	
-	public UILabel lyricsNGUI;
-	public UILabel lyricsNextNGUI;
 	public UISlider lyricsElapsedNGUI;
 	private string[] lyricsArray;
 	private List<string> lyricsContainer;
@@ -62,11 +60,9 @@ public class LyricsManager : MonoBehaviour
 			}
 			//lyricsArea.Value = song.time / song.clip.length;
 			if (count < lyricsContainer.Count - 1) {
-				lyricsNGUI.text = TrimLyrics (lyricsContainer [count]);
 				lyricsText.text = TrimLyrics (lyricsContainer [count]);
 				if (lyricsContainer.Count - count > 1) {
 					lyricsTextNext.text = TrimLyrics (lyricsContainer [count + 1]);
-					lyricsNextNGUI.text = TrimLyrics (lyricsContainer [count + 1]);
 				} else {
 					lyricsTextNext.text = "FINISHED";
 				}
