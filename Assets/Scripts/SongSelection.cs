@@ -6,18 +6,16 @@ using System.IO;
 public class SongSelection : MonoBehaviour
 {
 
-	public GUIText guiSongSelected;
 	public List<SongContainer> listSong;
 	public float startYPos = 0;
 	public float minHeight = 250;
-	public float xPosLeft = 0.017f;
-	public float xPosRight = 0.507f;
-	public float yIncrement = 0.26f;
+	public float margin = 5f;
+	public float firstPosition = 720f;
 	public AudioSource music;
 	public ObjectSend dataSend;
 	
 	public tk2dUIScrollableArea songContent;
-	public GameObject songButtonPrefabs;
+	public GameObject songItemPrefabs;
 	public GameObject playButton;
 	
 	private bool musicPlay;
@@ -27,7 +25,7 @@ public class SongSelection : MonoBehaviour
 	private List<Texture> listImage;
 	private List<AudioClip> listClip;
 	private SongContainer songSelected;
-	private float hScrollbarValue = 0;
+	private float hScrollbarValue;
 	private tk2dUIItem playButtonUIItem;
 	
 	void Awake ()
@@ -48,7 +46,7 @@ public class SongSelection : MonoBehaviour
 		
 		songSelected = null;
 		musicPlay = false;
-		float pos = 0;
+		float pos = firstPosition;
 		
 		//ambil data dari xml
 		List<Dictionary<string,string>> rawData = data.retrieveData ();
@@ -67,14 +65,15 @@ public class SongSelection : MonoBehaviour
 			AudioClip clip = LoadMusic (song.file);
 			listClip.Add (clip);
 			
-			float x = xPosLeft;
+			float x = margin;
 			float y = pos;
 			if(listImage.Count > 0 && listImage.Count % 2 == 0) {
-				x = xPosRight;
-				pos -= yIncrement;
+				x = songItemPrefabs.transform.localScale.x + margin;
+				pos -= songItemPrefabs.transform.localScale.y + margin;
 			} else {
 				
 			}
+			
 			CreateSong(song, texture, clip, new Vector3(x, y, 0));
 			
 						
@@ -119,13 +118,13 @@ public class SongSelection : MonoBehaviour
 
 	}
 	
-	public void SelectMusic(SongContainer song, AudioClip clip, GameObject songButton) {
+	public void SelectMusic(SongContainer song, AudioClip clip, GameObject songItem) {
 		dataSend.song = songSelected = song;
 		dataSend.clip = music.clip = clip;
 		musicPlay = true;
-		Vector3 position = songButton.transform.localPosition;
-		//position.x = position.x + collider.transform.localPosition.x;
-		//position.y = position.y + collider.transform.localPosition.y;
+		Vector3 position = songItem.transform.localPosition;
+		position.x = position.x + (songItem.transform.localScale.x / 2);
+		position.y = position.y - (songItem.transform.localScale.y / 2);
 		
 		//position = songButton.collider.bounds.center;
 		position.z -= 1;
@@ -141,16 +140,16 @@ public class SongSelection : MonoBehaviour
 	}
 	
 	public void CreateSong (SongContainer song, Texture image, AudioClip clip, Vector3 position) {
-		GameObject songPrefabs = Instantiate(songButtonPrefabs) as GameObject;
+		GameObject songPrefabs = Instantiate(songItemPrefabs) as GameObject;
 		songPrefabs.transform.parent = songContent.contentContainer.transform;
-		songPrefabs.transform.localScale = Vector3.one;
+		//songPrefabs.transform.localScale = Vector3.one;
 		songPrefabs.transform.localPosition = position;
 		
-		tk2dTextMesh text = songPrefabs.GetComponentInChildrenFast<tk2dTextMesh>();
+		tk2dTextMesh text = songPrefabs.GetComponentInChildren<tk2dTextMesh>();
 		text.text = song.singer + " - " + song.title;
 		
 		tk2dUIItem uiItem = songPrefabs.GetComponent<tk2dUIItem>();
-		SongButton songButton = songPrefabs.GetComponent<SongButton>();
+		SongItem songButton = songPrefabs.GetComponent<SongItem>();
 		songButton.songContainer = song;
 		songButton.audioClip = clip;
 		songButton.coverImage = image;

@@ -5,19 +5,16 @@ using System.Collections.Generic;
 
 public class BackgroundManager : MonoBehaviour {
 	
-	public float pivotX = -240;
-	public float pivotY = 80;
-	public tk2dSprite background;
+	public float pivotY = 60;
+	public GameObject parentBackground;
+	public GameObject backgroundPrefabs;
 	
-	public exLayer backgroundLayer;
-	public exSprite backgroundPrefabs;
 	public int backgroundCount;
 	
-	private List<exSprite> backgrounds;
-	
+	private List<GameObject> backgrounds;
 	
 	void Awake () {
-		backgrounds = new List<exSprite>();
+		backgrounds = new List<GameObject>();
 		backgroundCount = 0;
 	}
 	
@@ -40,10 +37,14 @@ public class BackgroundManager : MonoBehaviour {
 	}
 	
 	void AddBackground(){
-		exSprite bg = GameObject.Instantiate(backgroundPrefabs, Vector3.zero, Quaternion.identity) as exSprite;
-		bg.transform.parent = backgroundLayer.transform;
-		bg.transform.localPosition = new Vector3( (bg.width) * backgroundCount , pivotY, 0);
-		backgroundLayer.Add(bg);
+		GameObject bg = GameObject.Instantiate(backgroundPrefabs, Vector3.zero, Quaternion.identity) as GameObject;
+		
+		tk2dSprite sprite = bg.GetComponent<tk2dSprite>();
+		
+		//exSprite bg = GameObject.Instantiate(backgroundPrefabs, Vector3.zero, Quaternion.identity) as exSprite;
+		bg.transform.parent = parentBackground.transform;
+		bg.transform.localPosition = new Vector3( sprite.scale.x * backgroundCount , pivotY, 0);
+		backgrounds.Add(bg);
 		backgroundCount++;	
 	}
 	

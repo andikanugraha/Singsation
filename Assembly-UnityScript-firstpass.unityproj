@@ -46,18 +46,14 @@
   <ItemGroup>
      <Compile Include="Assets\Standard Assets\Particles\Legacy Particles\TimedObjectDestructor.js" />
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Depth.shader" />
-     <None Include="Assets\Examples\Res\Fonts\BerlinSansFB_MonoOutline.txt" />
-     <None Include="Assets\Examples\Res\Fonts\BerlinSansFB_Small.txt" />
      <None Include="Assets\TK2DROOT\tk2d\Shaders\LitSolidVertexColor.shader" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\Wooden\Arimo20.txt" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\Wooden\Arimo14.txt" />
-     <None Include="Assets\ex2D\Runtime\Resources\Shaders\AlphaBlendVertColorClipping.shader" />
      <None Include="Assets\TK2DROOT\tk2d\Goodies\TexturePacker\Exporter\2dtoolkit\exporter.xml" />
      <None Include="Assets\TK2DROOT\tk2d\Shaders\SolidVertexColor.shader" />
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Unlit - Masked Colored.shader" />
      <None Include="Assets\TK2DROOT\tk2dUI\Shaders\DepthMask.shader" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\Wooden\Arimo18.txt" />
-     <None Include="Assets\ex2D\Runtime\Resources\Shaders\AlphaBlendVertColor.shader" />
      <None Include="Assets\Standard Assets\Particles\Sources\Shaders\Particle Alpha Blend (Queue +100).shader" />
      <None Include="Assets\TK2DROOT\tk2d\Shaders\LitPremulVertexColor.shader" />
      <None Include="Assets\TK2DROOT\tk2d\Shaders\PremulVertexColor.shader" />
@@ -65,7 +61,6 @@
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\SciFi\SciFi Font - Header.txt" />
      <None Include="Assets\TK2DROOT\tk2d\Shaders\goodies\PackedTextMesh.shader" />
      <None Include="Assets\TK2DROOT\tk2d\Shaders\Blend2TexVertexColor.shader" />
-     <None Include="Assets\ex2D\Runtime\Resources\Shaders\AlphaBlendNoZTest.shader" />
      <None Include="Assets\Other\obsolete code singsation.txt" />
      <None Include="Assets\Standard Assets\Skyboxes\_skybox info.txt" />
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Unlit - Transparent Colored (AlphaClip).shader" />
@@ -80,7 +75,6 @@
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Unlit - Transparent Colored (HardClip).shader" />
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Unlit - Transparent Colored Overlay.shader" />
      <None Include="Assets\TK2DROOT\tk2d\Editor\EditorUtility.shader" />
-     <None Include="Assets\Examples\Res\Fonts\MolotFineLineShadow.txt" />
      <None Include="Assets\Plugin\iTween\ReadMe!\ReadMe!.txt" />
      <None Include="Assets\Plugin\NGUI\Examples\Other\English.txt" />
      <None Include="Assets\TK2DROOT\tk2d\Shaders\CutoutVertexColor.shader" />
@@ -93,10 +87,8 @@
      <None Include="Assets\TK2DROOT\tk2dUI_demo\Assets\Dark\Fonts\Nunito16.fnt" />
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Unlit - Additive Colored.shader" />
      <None Include="Assets\TK2DROOT\tk2dUI_demo\Assets\Dark\Fonts\Nunito32.fnt" />
-     <None Include="Assets\ex2D\Runtime\Resources\Shaders\AlphaBlend.shader" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\Refractive\Refractive Font - Header.txt" />
      <None Include="Assets\Plugin\NGUI\Examples\Shaders\Refractive.shader" />
-     <None Include="Assets\ex2D\Runtime\Resources\Shaders\AlphaBlendClipping.shader" />
      <None Include="Assets\Plugin\NGUI\Examples\Atlases\SciFi\SciFi Font - Normal.txt" />
      <None Include="Assets\Plugin\NGUI\Resources\Shaders\Unlit - Transparent Colored (SoftClip).shader" />
      <None Include="Assets\Resources\Notes\002_big bang_love song.txt" />

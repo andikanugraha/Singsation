@@ -6,6 +6,10 @@ public class GlobalSetting : MonoBehaviour {
 	public bool debugMode = true;
 	public float volume = 100;
 	
+	//minimum default resolution
+	public static float minResolutionX = 480;
+	public static float minResolutionY = 800;
+	
 	public GUITexture screenBorder;
 	
 	void Start() {
