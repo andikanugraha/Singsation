@@ -75,7 +75,7 @@ public class LyricsManager : MonoBehaviour
 				float yPos = lyricsText.transform.position.y;
 				lyricsArea.Value = (float) count / (float) lyricsContainer.Count;
 				//lyricsArea.Value = 2f;
-				Debug.Log ("Percent: " + lyricsArea.Value + " count: " + count + " container: " + lyricsContainer.Count);
+				//Debug.Log ("Percent: " + lyricsArea.Value + " count: " + count + " container: " + lyricsContainer.Count);
 				lyricsElapsedNGUI.sliderValue = percent;
 			} else {
 				lyricsText.text = "FINISHED";

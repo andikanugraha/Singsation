@@ -23,7 +23,7 @@ public class SpectrumManager : MonoBehaviour {
 	
 	
 	public GUIText display; // drag a GUIText here to show results
-	public UISlider decibelBar;
+	public tk2dUIProgressBar decibelBar;
 	
 	int qSamples = 1024;  // array size
 	float refValue = 0.1f; // RMS value for 0 dB
@@ -82,7 +82,7 @@ public class SpectrumManager : MonoBehaviour {
 		}
 		
 		if(decibelBar) {
-			decibelBar.sliderValue = dbValue / maxDecibel;
+			decibelBar.Value = dbValue / maxDecibel;
 		}	
 		
 		//decibelBar.sliderValue = 0.8f;

@@ -14,7 +14,7 @@ public class GamePlayManager : MonoBehaviour
 	public tk2dUIItem pauseButton;
 	public AudioSource song;
 	public GUIText timeLapse;
-	public PauseMenu pauseMenu;
+//	public PauseMenu pauseMenu;
 	public MicrophoneInput microphoneInput;
 	public tk2dTextMesh songTitle;
 	public tk2dTextMesh scoreText;
@@ -98,9 +98,9 @@ public class GamePlayManager : MonoBehaviour
 			song.Play ();	
 		}
 		
-		if (pauseMenu.enabled) {
-			pauseMenu.enabled = false;	
-		}
+//		if (pauseMenu.enabled) {
+//			pauseMenu.enabled = false;	
+//		}
 		
 		if (!microphoneInput.enabled) {
 			microphoneInput.enabled = true;
@@ -137,9 +137,9 @@ public class GamePlayManager : MonoBehaviour
 			song.Pause ();	
 		}
 		
-		if (!pauseMenu.enabled) {
-			pauseMenu.enabled = true;	
-		}
+//		if (!pauseMenu.enabled) {
+//			pauseMenu.enabled = true;	
+//		}
 		
 		if (microphoneInput.enabled) {
 			microphoneInput.enabled = false;
